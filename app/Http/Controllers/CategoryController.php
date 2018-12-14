@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Category;
+use App\CategoryDescription;
+
 class CategoryController extends Controller
 {
     /**
@@ -17,17 +20,18 @@ class CategoryController extends Controller
         $categories = array();
 
         //fetch category_descriptions from database
-        $categories_ids = Category_description::select('category_id')->distinct()->get();
+        $categories_ids = CategoryDescription::select('category_id')->distinct()->get();
 
         //mapping value
         foreach ($categories_ids as $category_id) {
-            $category_in_db = Category_description::where('category_id', $category_id->category_id)->where('language_id', $lang)->first();
+            $category_in_db = CategoryDescription::where('category_id', $category_id->category_id)->where('language_id', $lang)->first();
             if ($category_in_db == null) {
-                $category_in_db = Category_description::where('category_id', $category_id->category_id)->first();
+                $category_in_db = CategoryDescription::where('category_id', $category_id->category_id)->first();
             }
 
             $category["category_id"] = $category_in_db->category_id;
             $category["name"] = $category_in_db->name;
+            $category["cate"] = $category_in_db->category();
 
             array_push($categories, $category);
         }

@@ -28,6 +28,6 @@ class Category extends Model
      */
     public function categoryDescription()
     {
-        return $this->hasOne('App\CategoryDescription');
+        return $this->hasOne('App\CategoryDescription', 'category_id', 'category_id');
     }
 }
