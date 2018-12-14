@@ -4,8 +4,9 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Product_option_value extends Model
+class OrderOption extends Model
 {
-    protected $table = "oc_product_option_value";
+    protected $table = "oc_order_option";
     public $timestamps = false;
+
 }

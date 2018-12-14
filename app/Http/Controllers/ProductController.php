@@ -2,45 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Category_description;
-use App\Option_description;
-use App\Option_value;
-use App\Option_value_description;
+use App\CategoryDescription;
 use App\Product;
-use App\Product_add_type;
-use App\Product_description;
-use App\Product_ext;
-use App\Product_option_value;
-use App\Product_to_category;
 
 class ProductController extends Controller
 {
+
+    /**
+     * get all products list in certain language
+     *
+     * @param integer $lang
+     * @return listOfProducts
+     */
     public function index($lang)
     {
-        /** product object full details
-         * need for displaying:
-         * {
-         *  cateory name:string,
-         *  products: [
-         *      {
-         *          product_name: string,
-         *          product_description: string,
-         *          product_choices: [
-         *              {
-         *                  add_type_name:string,
-         *                  choice_items: [
-         *                      product_ext_name,
-         *                      price
-         *                  ]
-         *              }
-         *          ]
-         *      }
-         * ]
-         * }
-         */
-        //fetch app_conf
-        //$lang = config("app.lang");
-
         /** clear mode do not need details [1], full detail mode need everything. [9]*/
         $mode = config("app.show_options");
 
@@ -49,7 +24,7 @@ class ProductController extends Controller
         $categories = array();
 
         //fetch category_descriptions from database
-        $categories_ids = Category_description::select('category_id')->distinct()->get();
+        $categories_ids = CategoryDescription::select('category_id')->distinct()->get();
 
         //mapping value
         foreach ($categories_ids as $category_id) {
@@ -103,9 +78,9 @@ class ProductController extends Controller
                 $new_product["upc"] = $upc;
                 $new_product["description"] = $target_product->description;
 
-                $image_path = '/table/public/images/items/'.$p->image;
+                $image_path = '/table/public/images/items/' . $p->image;
                 $new_product["image"] = "";
-                if ($p->image === null || !file_exists($_SERVER['DOCUMENT_ROOT'].$image_path)) {
+                if ($p->image === null || !file_exists($_SERVER['DOCUMENT_ROOT'] . $image_path)) {
                     $new_product["image"] = 'default_product.jpg';
                     // $new_product["image"] = '24.jpg';
 
@@ -113,7 +88,7 @@ class ProductController extends Controller
 
                     $new_product["image"] = $p->image;
                 }
-                
+
                 //details only needed for show options mode
                 if ($mode == 9) {
                     $new_product["choices"] = $this->getChoicesHelper($target_product->product_id, $lang);
@@ -128,7 +103,6 @@ class ProductController extends Controller
             $product_group = ["categorys" => $new_category, "products" => $products_groupby_category];
             array_push($result, $product_group);
         }
-
 
         //return the result to client side
         return response()->json([
