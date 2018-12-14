@@ -4,8 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class orderItem extends Model
+class OrderItem extends Model
 {
-    //
-    public $orderId=1;
+    public $orderId = 1;
 }

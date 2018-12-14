@@ -3,7 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\CategoryDescription;
+use App\OptionDescription;
+use App\OptionValueDescription;
 use App\Product;
+use App\ProductAddType;
+use App\ProductDescription;
+use App\ProductExt;
+use App\ProductOptionValue;
+use App\ProductToCategory;
 
 class ProductController extends Controller
 {
@@ -16,21 +23,22 @@ class ProductController extends Controller
      */
     public function index($lang)
     {
-        /** clear mode do not need details [1], full detail mode need everything. [9]*/
+        // clear mode do not need details [1], full detail mode need everything. [9]*/
         $mode = config("app.show_options");
 
         /** get all categories first */
         //this is the result
         $categories = array();
 
-        //fetch category_descriptions from database
+        //fetch all category ids oc_category_description
         $categories_ids = CategoryDescription::select('category_id')->distinct()->get();
 
         //mapping value
         foreach ($categories_ids as $category_id) {
-            $category_in_db = Category_description::where('category_id', $category_id->category_id)->where('language_id', $lang)->first();
+            $category_in_db = CategoryDescription::where('category_id', $category_id->category_id)->where('language_id', $lang)->first();
+            // check if select language have value if not pass first record with value
             if ($category_in_db == null) {
-                $category_in_db = Category_description::where('category_id', $category_id->category_id)->first();
+                $category_in_db = CategoryDescription::where('category_id', $category_id->category_id)->first();
             }
 
             $category["category_id"] = $category_in_db->category_id;
@@ -47,16 +55,16 @@ class ProductController extends Controller
             $new_category["name"] = $category["name"];
             $new_category["id"] = $category["category_id"];
 
-            $p_ids = Product_to_category::where('category_id', $category["category_id"])->get();
+            $p_ids = ProductToCategory::where('category_id', $category["category_id"])->get();
             $products_groupby_category = [];
 
             foreach ($p_ids as $id) {
                 /** select the target product in DB then map the need value to new_product */
 
                 //select target product in DB
-                $target_product = Product_description::where('product_id', $id->product_id)->where('language_id', $lang)->first();
+                $target_product = ProductDescription::where('product_id', $id->product_id)->where('language_id', $lang)->first();
                 if ($target_product === null) {
-                    $target_product = Product_description::where('product_id', $id->product_id)->first();
+                    $target_product = ProductDescription::where('product_id', $id->product_id)->first();
                 }
                 /** create price value*/
                 //fetch price first
@@ -117,15 +125,15 @@ class ProductController extends Controller
         $choices_groupby_type = array();
 
         /** find out all types for certain product */
-        $typeIds_to_product = Product_ext::where('product_id', $id)->select('type')->distinct()->get(); //return array(obj)
+        $typeIds_to_product = ProductExt::where('product_id', $id)->select('type')->distinct()->get(); //return array(obj)
 
         //Fix Lang:
         foreach ($typeIds_to_product as $typeId_to_product) {
             $choices = array();
             /**oc_product_add_type: [add_type_id:int] [name:string][type:bit][required:bit][checkbox:bit] */
-            $choice = Product_add_type::where('add_type_id', $typeId_to_product->type)->first();
+            $choice = ProductAddType::where('add_type_id', $typeId_to_product->type)->first();
             /**oc_product_ext: [product_ext_id:int][product_id:int][type:int][name:string][price:float] */
-            $choices_to_type = Product_ext::where('product_id', $id)->where('type', $choice["add_type_id"])->get();
+            $choices_to_type = ProductExt::where('product_id', $id)->where('type', $choice["add_type_id"])->get();
 
             foreach ($choices_to_type as $choice_to_type) {
                 $choices_item["product_ext_id"] = $choice_to_type["product_ext_id"];
@@ -169,16 +177,16 @@ class ProductController extends Controller
          * [option_value_id:int][price:float ex:1.0000]
          * ??::[display:bit]
          */
-        $productOptionValueList = Product_option_value::where('product_id', $id)->get();
+        $productOptionValueList = ProductOptionValue::where('product_id', $id)->get();
 
-        $option_ids = Product_option_value::where('product_id', $id)->select('option_id')->distinct()->get();
+        $option_ids = ProductOptionValue::where('product_id', $id)->select('option_id')->distinct()->get();
 
         /** create option details */
         foreach ($option_ids as $option_id) {
             /**add option name & language_id,sort_order to the obj
              * oc_option_description: [option_id:int][language_id:bit][name:string]
              */
-            $option_name = Option_description::where('option_id', $option_id->option_id)->where('language_id', $lang)->first();
+            $option_name = OptionDescription::where('option_id', $option_id->option_id)->where('language_id', $lang)->first();
             $option_name = $option_name["name"];
 
             /**ToDo: may use for display*/
@@ -200,7 +208,7 @@ class ProductController extends Controller
                     /** oc_option_value_description
                      * [option_value_id:int(11)][language_id:int(11)][option_id:int(11)][name:varchar(128)]
                      */
-                    $option_value_name = Option_value_description::where('option_value_id', $option_value_id)->where('language_id', $lang)->first();
+                    $option_value_name = OptionValueDescription::where('option_value_id', $option_value_id)->where('language_id', $lang)->first();
 
                     $option_value_name = $option_value_name["name"];
                     /** create price
