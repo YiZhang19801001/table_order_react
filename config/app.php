@@ -6,7 +6,7 @@ return [
     'show_options' => true,
 
     // preoder mode switch [false: preorder mode off, true: preorder mode on]
-    'perorder' => false,
+    'perorder' => true,
 
     // Qr code has / hasn't small icon image in the middle [if choose true, 'QrImageUrl' must have valid value]
     'QrCodeImage' => true,
@@ -188,7 +188,7 @@ return [
          */
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
-        // App\Providers\BroadcastServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 

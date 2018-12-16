@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Category;
 use App\CategoryDescription;
 
 class CategoryController extends Controller
@@ -31,7 +30,6 @@ class CategoryController extends Controller
 
             $category["category_id"] = $category_in_db->category_id;
             $category["name"] = $category_in_db->name;
-            $category["cate"] = $category_in_db->category();
 
             array_push($categories, $category);
         }

@@ -4,20 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Events\newOrderItemAdded;
 use App\Order;
-use App\Order_ext;
-use App\Order_history;
-use App\Order_option;
-use App\Order_product;
-use App\order_table_linksub;
-use App\Order_total;
+use App\OrderExt;
+use App\OrderHistory;
+use App\OrderOption;
+use App\OrderProduct;
+use App\orderTableLinksub;
+use App\OrderTotal;
 use App\Product;
-use App\Product_add_type;
-use App\Product_description;
-use App\Table_link;
-use App\Temp_order;
-use App\Temp_order_item;
-use App\Temp_pickedChoice;
-use App\Temp_pickedOption;
+use App\ProductAddType;
+use App\ProductDescription;
+use App\TableLink;
+use App\TempOrder;
+use App\TempOrderItem;
+use App\TempPickedChoice;
+use App\TempPickedOption;
 use DateTime;
 use DateTimeZone;
 use Illuminate\Http\Request;
@@ -133,7 +133,7 @@ class OrderController extends Controller
         $v = $request->v;
 
         //check if this QRcode valid in DB
-        $new_table_link = Table_link::where('validation', $v)->first();
+        $new_table_link = TableLink::where('validation', $v)->first();
         //$new_table_link === null => QRcode is not valid
         if ($new_table_link === null || $new_table_link->status !== 0) {
             return response()->json(["message" => "this QR Code is invalid, please contact staff!"], 400);
@@ -176,7 +176,7 @@ class OrderController extends Controller
     {
 
         /** step 1. check there is a temp order for this or not=> yes: fetch order details, no: create new Temp_order */
-        $order_to_table = Temp_order::where('id', $order_id)->where('table_number', $table_id)->first();
+        $order_to_table = TempOrder::where('id', $order_id)->where('table_number', $table_id)->first();
 
         //call help method to CREATE NEW TEMP_ORDER
         if ($order_to_table === null) {
@@ -194,11 +194,11 @@ class OrderController extends Controller
         /** temp_order_items
          * [id:int(10)][quantity:int(11)][product_id:int(11)][order_id:int(11)]
          */
-        $arr_order_items_confirmed = Temp_order_item::where('order_id', $order_id)->where('quantity', '>', 0)->where('oc_order_id', '!=', null)->get();
+        $arr_order_items_confirmed = TempOrderItem::where('order_id', $order_id)->where('quantity', '>', 0)->where('oc_order_id', '!=', null)->get();
 
         if (count($arr_order_items_confirmed) > 0) {
             foreach ($arr_order_items_confirmed as $key => $item) {
-                $linksub = order_table_linksub::where('order_id', $item['oc_order_id'])->first();
+                $linksub = OrderTableLinksub::where('order_id', $item['oc_order_id'])->first();
                 if ($linksub == null || $linksub->sub_status > 1) {
                     unset($arr_order_items_confirmed[$key]);
                 }
@@ -206,7 +206,7 @@ class OrderController extends Controller
         }
         $orderHistory = $this->addDetailsForOrderListHelper($arr_order_items_confirmed, $lang);
 
-        $arr_order_items_pendding = Temp_order_item::where('order_id', $order_id)->where('quantity', '>', 0)->where('oc_order_id', null)->get();
+        $arr_order_items_pendding = TempOrderItem::where('order_id', $order_id)->where('quantity', '>', 0)->where('oc_order_id', null)->get();
 
         $order = $this->addDetailsForOrderListHelper($arr_order_items_pendding, $lang);
 
@@ -228,10 +228,10 @@ class OrderController extends Controller
         /** order_item details need: [name][quantity][price] full detail mode only [ext][option]*/
         foreach ($arr_order_items as $order_item) {
             $new_orderList_ele = array();
-            $targe_product = Product_description::where('product_id', $order_item["product_id"])->where('language_id', $lang)->first();
+            $targe_product = ProductDescription::where('product_id', $order_item["product_id"])->where('language_id', $lang)->first();
             /** if no chinese version row, return en version */
             if ($targe_product === null) {
-                $targe_product = Product_description::where('product_id', $order_item["product_id"])->first();
+                $targe_product = ProductDescription::where('product_id', $order_item["product_id"])->first();
             }
             $p = Product::where('product_id', $order_item["product_id"])->first();
 
@@ -268,12 +268,12 @@ class OrderController extends Controller
                 /**temp_pickedchoices
                  * [id:int(10)][order_item_id:int(11)][choice_type:varchar(255)][picked_Choice:varchar(255)]
                  */
-                $pickedChoices = Temp_pickedChoice::where('order_item_id', $order_item["id"])->get();
+                $pickedChoices = TempPickedChoice::where('order_item_id', $order_item["id"])->get();
 
                 $productChoiceList = [];
 
                 foreach ($pickedChoices as $pickChoice) {
-                    $type = Product_add_type::where('name', $pickChoice["choice_type"])->first();
+                    $type = ProductAddType::where('name', $pickChoice["choice_type"])->first();
 
                     //$choices = Product_ext::where('type',$type->add_type_id)->get();
 
@@ -287,7 +287,7 @@ class OrderController extends Controller
                 $new_orderList_ele["item"]["choices"] = $productChoiceList;
 
                 /**grab all information for options */
-                $pickedOptions = Temp_pickedOption::where('order_item_id', $order_item["id"])->get();
+                $pickedOptions = TempPickedOption::where('order_item_id', $order_item["id"])->get();
 
                 $productOptionList = [];
                 foreach ($pickedOptions as $pickOption) {
@@ -326,7 +326,7 @@ class OrderController extends Controller
     public function create($order_id, $table_id)
     {
         //create new record in order table
-        $order = new Temp_order;
+        $order = new TempOrder;
         $order->table_number = $table_id;
         $order->id = $order_id;
         $order->save();
@@ -342,7 +342,7 @@ class OrderController extends Controller
     {
         $target_item = $request->orderItem;
         $order_id = $request->orderId;
-        Temp_order_item::whereId($target_item["item"]["order_item_id"])->increment("quantity");
+        TempOrderItem::whereId($target_item["item"]["order_item_id"])->increment("quantity");
 
         broadcast(new newOrderItemAdded($request->orderId));
 
@@ -353,11 +353,11 @@ class OrderController extends Controller
     {
         $target_item = $request->orderItem;
         $order_id = $request->orderId;
-        Temp_order_item::whereId($target_item["item"]["order_item_id"])->decrement("quantity");
-        $num = Temp_order_item::where('id', $target_item["item"]["order_item_id"])->first();
+        TempOrderItem::whereId($target_item["item"]["order_item_id"])->decrement("quantity");
+        $num = TempOrderItem::where('id', $target_item["item"]["order_item_id"])->first();
 
         if ($num["quantity"] == 0) {
-            Temp_order_item::whereId($target_item["item"]["order_item_id"])->delete();
+            TempOrderItem::whereId($target_item["item"]["order_item_id"])->delete();
         }
         broadcast(new newOrderItemAdded($request->orderId));
         return $target_item;
@@ -368,7 +368,7 @@ class OrderController extends Controller
 
         $mode = config('app.show_options');
 
-        $new_order_item = new Temp_order_item;
+        $new_order_item = new TempOrderItem;
         $new_order_item->quantity = 1;
         $new_order_item->product_id = $new_item["product_id"];
         $new_order_item->order_id = $orderId;
@@ -379,7 +379,7 @@ class OrderController extends Controller
         }
 
         foreach ($new_item["choices"] as $choice) {
-            $new_pickedChoice = new Temp_pickedChoice;
+            $new_pickedChoice = new TempPickedChoice;
 
             $new_pickedChoice->product_ext_id = $choice["product_ext_id"];
             $new_pickedChoice->order_item_id = $new_order_item->id;
@@ -391,7 +391,7 @@ class OrderController extends Controller
         }
 
         foreach ($new_item["options"] as $option) {
-            $new_pickedOption = new Temp_pickedOption;
+            $new_pickedOption = new TempPickedOption;
 
             $new_pickedOption->order_item_id = $new_order_item->id;
             $new_pickedOption->product_option_value_id = $option["product_option_value_id"];
@@ -439,7 +439,7 @@ class OrderController extends Controller
         //1. loop through all rows in the orderList if oc_order_id is null, then put $id in
         foreach ($orderList as $item) {
 
-            $target_temp_order_item = Temp_order_item::where('id', $item["item"]["order_item_id"])->first();
+            $target_temp_order_item = TempOrderItem::where('id', $item["item"]["order_item_id"])->first();
             if ($target_temp_order_item->oc_order_id === null) {
                 $target_temp_order_item->oc_order_id = $id;
             }
@@ -449,13 +449,13 @@ class OrderController extends Controller
 
     public function createOrderLinkSubHelper($new_order, $v)
     {
-        $new_order_linksub = new order_table_linksub;
+        $new_order_linksub = new OrderTableLinksub;
         $new_order_linksub->sub_add_time = $new_order->date_added;
         $new_order_linksub->downloaded = 0;
         $new_order_linksub->order_id = $new_order->id;
         $new_order_linksub->sub_status = 1;
 
-        $new_table_link = Table_link::where('validation', $v)->first();
+        $new_table_link = TableLink::where('validation', $v)->first();
         $new_order_linksub->link_id = $new_table_link->link_id;
 
         $new_order_linksub->save();
@@ -557,7 +557,7 @@ class OrderController extends Controller
         $dt = new DateTime("now", new DateTimeZone($tz)); //first argument "must" be a string
         $dt->setTimestamp($timestamp); //adjust the object to correct timestamp
 
-        $new_order_history = new Order_history;
+        $new_order_history = new OrderHistory;
         $new_order_history->order_id = $order_id;
         $new_order_history->notify = 0;
         //Todo: read from new order??
@@ -570,7 +570,7 @@ class OrderController extends Controller
 
     public function createOrderTotalHelper($order_id, $value)
     {
-        $new_order_total_1 = new Order_total;
+        $new_order_total_1 = new OrderTotal;
         $new_order_total_1->order_id = $order_id;
         $new_order_total_1->code = "sub_total";
         $new_order_total_1->title = "Sub-Total";
@@ -578,7 +578,7 @@ class OrderController extends Controller
         $new_order_total_1->sort_order = 1;
         $new_order_total_1->save();
 
-        $new_order_total_2 = new Order_total;
+        $new_order_total_2 = new OrderTotal;
         $new_order_total_2->order_id = $order_id;
         $new_order_total_2->code = "shipping";
         $new_order_total_2->title = "Dive-In";
@@ -586,7 +586,7 @@ class OrderController extends Controller
         $new_order_total_2->sort_order = 3;
         $new_order_total_2->save();
 
-        $new_order_total_3 = new Order_total;
+        $new_order_total_3 = new OrderTotal;
         $new_order_total_3->order_id = $order_id;
         $new_order_total_3->code = "total";
         $new_order_total_3->title = "Total";
@@ -600,7 +600,7 @@ class OrderController extends Controller
         $arr_order_items = $orderList;
 
         foreach ($arr_order_items as $order_product) {
-            $new_order_product = new Order_product;
+            $new_order_product = new OrderProduct;
             $new_order_product->order_id = $order_id;
             $new_order_product->product_id = $order_product["item"]["product_id"];
             $new_order_product->model = 1;
@@ -616,7 +616,7 @@ class OrderController extends Controller
             if (config('app.show_options')) {
                 /**picked choices */
                 foreach ($order_product["item"]["choices"] as $choice) {
-                    $new_order_ext = new Order_ext;
+                    $new_order_ext = new OrderExt;
 
                     $new_order_ext->product_ext_id = $choice["product_ext_id"];
                     $new_order_ext->order_product_id = $new_order_product->id;
@@ -626,7 +626,7 @@ class OrderController extends Controller
                 }
                 /**store picked options in DB*/
                 foreach ($order_product["item"]["options"] as $option) {
-                    $new_order_option = new Order_option;
+                    $new_order_option = new OrderOption;
                     $new_order_option->order_id = $order_id;
                     $new_order_option->order_product_id = $new_order_product->id;
 

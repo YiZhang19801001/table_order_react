@@ -30,3 +30,4 @@ Route::post('opentable', 'OrderController@create');
 Route::post('increase', 'OrderController@increase');
 Route::post('decrease', 'OrderController@decrease');
 Route::post('confirm', 'OrderController@confirmOrder');
+Route::post('test', 'HomeController@testBroadcast');

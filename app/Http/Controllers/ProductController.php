@@ -53,7 +53,7 @@ class ProductController extends Controller
         //loop cateogries to generate groups of products for showing in view
         foreach ($categories as $category) {
             $new_category["name"] = $category["name"];
-            $new_category["id"] = $category["category_id"];
+            $new_category["category_id"] = $category["category_id"];
 
             $p_ids = ProductToCategory::where('category_id', $category["category_id"])->get();
             $products_groupby_category = [];
@@ -108,7 +108,7 @@ class ProductController extends Controller
             }
 
             /** save products which are grouped by category in the foreach loop already */
-            $product_group = ["categorys" => $new_category, "products" => $products_groupby_category];
+            $product_group = ["category" => $new_category, "products" => $products_groupby_category];
             array_push($result, $product_group);
         }
 
