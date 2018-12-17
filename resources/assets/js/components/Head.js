@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import Axios from "axios";
 
 export default class Head extends Component {
   constructor(props) {
@@ -16,9 +15,11 @@ export default class Head extends Component {
       <div className="head">
         <div className="left">{this.props.title}</div>
         <div className="right">
-          <span className="button" onClick={this.changeLanguage}>
-            <span className="label">{this.props.btnLabel}</span>
-          </span>
+          {this.props.mode !== "menu" ? (
+            <span className="button" onClick={this.changeLanguage}>
+              <span className="label">{this.props.btnLabel}</span>
+            </span>
+          ) : null}
         </div>
       </div>
     );

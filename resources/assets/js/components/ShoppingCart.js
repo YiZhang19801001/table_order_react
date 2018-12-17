@@ -11,6 +11,7 @@ export default class ShoppingCart extends Component {
     this.state = {
       shoppingCartIconImage: "",
       shoppingCartList: [],
+      orderShoppingCartList: [],
       expand: false
     };
 
@@ -21,6 +22,13 @@ export default class ShoppingCart extends Component {
     this.toggleOrderList = this.toggleOrderList.bind(this);
   }
 
+  /**
+   * did mount method do fellowing tasks
+   * 1. set init state for shoppingCartIconImage and shoppingCartList
+   * 2. render shoppingCartList according to app mode [preorder/table]
+   * 3. update app.js.state.shoppingCartList by call [updateOrderList()]
+   * 4. set up channel if in table mode
+   */
   componentDidMount() {
     this.setState({
       shoppingCartIconImage:
@@ -28,24 +36,65 @@ export default class ShoppingCart extends Component {
       shoppingCartList: this.props.shoppingCartList
     });
 
-    console.log(this.props.path);
-
-    Axios.post("/table/public/api/initcart", {
-      order_id: this.props.orderId,
-      cdt: this.props.cdt,
-      v: this.props.v,
-      table_id: this.props.tableNumber,
-      lang: 1,
-      preorder: false
-    })
-      .then(res => {
-        this.replaceList(res.data);
-        this.setSpinnerStatus(false);
+    if (this.props.mode === "preorder") {
+      if (localStorage.getItem("preorderList")) {
+        console.log("read data from localstorage");
+        this.setState({
+          shoppingCartList: JSON.parse(localStorage.getItem("preorderList"))
+        });
+        this.props.updateOrderList(
+          JSON.parse(localStorage.getItem("preorderList"))
+        );
+      }
+    } else if (this.props.mode === "table") {
+      Axios.post(`/table/public/api/initcart`, {
+        order_id: this.props.orderId,
+        cdt: this.props.cdt,
+        v: this.props.v,
+        table_id: this.props.tableNumber,
+        lang: 1
       })
-      .catch(err => {
-        this.setErrMsg(err.response.data.message);
-        this.$router.push("/table/public/menu");
+        .then(res => {
+          console.log("response call initcart", res);
+          // this.setState({ shoppingCartList: res.data.pending_list });
+          this.props.updateOrderList(res.data);
+          // this.setState({ orderShoppingCartList: res.data.ordered_list });
+        })
+        .catch(err => {
+          this.props.redirectToMenu(err.response.data.message);
+        });
+
+      Echo.channel("tableOrder").listen("UpdateOrder", e => {
+        console.log("props orderId", this.props.orderId);
+        console.log("e orderId", e.orderId);
+        if (e.orderId == this.props.orderId && e.userId !== this.props.userId) {
+          // Axios.post(`/table/public/api/initcart`, {
+          //   order_id: this.props.orderId,
+          //   cdt: this.props.cdt,
+          //   v: this.props.v,
+          //   table_id: this.props.tableNumber,
+          //   lang: 1,
+          //   preorder: false
+          // })
+          //   .then(res => {
+          //     console.log("response call initcart trigger by broadcast", res);
+          //     // this.setState({ shoppingCartList: res.data.pending_list });
+          //     this.props.updateOrderList(res.data);
+          //     this.setState({ orderShoppingCartList: res.data });
+          //   })
+          //   .catch(err => {
+          //     console.log(err.response.data.message);
+          //   });
+          this.props.updateShoppingCartList(
+            e.orderItem,
+            "table",
+            e.action,
+            this.props.orderId,
+            this.props.tableNumber
+          );
+        }
       });
+    }
   }
 
   componentWillReceiveProps(newProps) {
@@ -98,6 +147,47 @@ export default class ShoppingCart extends Component {
   }
 
   render() {
+    const Order_List =
+      this.props.mode === "preorder" ? (
+        <div className="shopping-cart__list-container">
+          {this.state.shoppingCartList.map((orderItem, index) => {
+            return (
+              <OrderItemCard
+                orderItem={orderItem}
+                index={index}
+                increaseShoppingCartItem={this.props.increaseShoppingCartItem}
+                decreaseShoppingCartItem={this.props.decreaseShoppingCartItem}
+                key={`orderItemInShoppingCart${index}`}
+                mode={1}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <div className="shopping-cart__list-container">
+          {this.state.shoppingCartList.map((orderItem, index) => {
+            return (
+              <OrderItemCard
+                orderItem={orderItem}
+                index={index}
+                increaseShoppingCartItem={this.props.increaseShoppingCartItem}
+                decreaseShoppingCartItem={this.props.decreaseShoppingCartItem}
+                key={`orderItemInShoppingCart${index}`}
+                mode={1}
+              />
+            );
+          })}
+          {/* {this.state.orderShoppingCartList.map((orderItem, index) => {
+            return (
+              <OrderItemCard
+                orderItem={orderItem}
+                key={`orderItemInShoppingCart${index}`}
+                mode={3}
+              />
+            );
+          })} */}
+        </div>
+      );
     return (
       <div>
         {this.state.expand ? (
@@ -123,30 +213,17 @@ export default class ShoppingCart extends Component {
             </div>
           </div>
 
-          {this.state.expand ? (
-            <div className="shopping-cart__list-container">
-              {this.state.shoppingCartList.map((orderItem, index) => {
-                return (
-                  <OrderItemCard
-                    orderItem={orderItem}
-                    index={index}
-                    increaseShoppingCartItem={
-                      this.props.increaseShoppingCartItem
-                    }
-                    decreaseShoppingCartItem={
-                      this.props.decreaseShoppingCartItem
-                    }
-                    key={`orderItemInShoppingCart${index}`}
-                    mode={1}
-                  />
-                );
-              })}
-            </div>
-          ) : null}
+          {this.state.expand ? Order_List : null}
           {this.state.expand ? (
             <div className="order-item-card__confirm-button-container">
               <Link
-                to="/table/public/confirm"
+                to={
+                  this.props.mode === "preorder"
+                    ? `/table/public/confirm/${this.props.mode}`
+                    : `/table/public/confirm/${this.props.mode}/${
+                        this.props.tableNumber
+                      }/${this.props.orderId}`
+                }
                 className="order-item-card__confirm-button"
               >
                 {this.props.app_conf.confirm_order}

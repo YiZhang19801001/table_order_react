@@ -8,7 +8,12 @@ export default class Confirm extends Component {
   constructor(props) {
     super(props);
 
-    this.state = { qrString: "", shoppingCartList: [] };
+    this.state = {
+      qrString: "",
+      shoppingCartList: [],
+      orderId: "",
+      tableId: ""
+    };
 
     this.createQrCode = this.createQrCode.bind(this);
     this.getOrderItemQuantityTotal = this.getOrderItemQuantityTotal.bind(this);
@@ -75,28 +80,35 @@ export default class Confirm extends Component {
   }
 
   render() {
+    const qr_section = (
+      <div className="qrcode-section">
+        <div className="qrcode-container">
+          <QRCode
+            bgColor="#FFFFFF"
+            fgColor="#000000"
+            level="Q"
+            style={{ width: 180 }}
+            value={this.createQrCode()}
+          />
+        </div>
+        <div className="confirm__subtitle">
+          {this.props.match.params.mode === "preorder"
+            ? this.props.app_conf.preorder_qr_tips
+            : this.props.app_conf.tableorder_qr_tips}
+        </div>
+      </div>
+    );
     return (
       <div className="confirm">
-        <div className="confirm__title">
-          <img src="/table/public/images/layout/icon_confirm.png" alt="" />
-          <span className="confirm__title-text">
-            {this.props.app_conf.preorder_confirm_text}
-          </span>
-        </div>
-        <div className="qrcode-section">
-          <div className="qrcode-container">
-            <QRCode
-              bgColor="#FFFFFF"
-              fgColor="#000000"
-              level="Q"
-              style={{ width: 180 }}
-              value={this.createQrCode()}
-            />
+        {this.props.match.params.mode === "preorder" ? (
+          <div className="confirm__title">
+            <img src="/table/public/images/layout/icon_confirm.png" alt="" />
+            <span className="confirm__title-text">
+              {this.props.app_conf.preorder_confirm_text}
+            </span>
           </div>
-          <div className="confirm__subtitle">
-            {this.props.app_conf.preorder_qr_tips}
-          </div>
-        </div>
+        ) : null}
+        {this.props.match.params.mode === "preorder" ? { qr_section } : null}
         <div className="confirm__order-list__title">
           <span className="confirm__order-list__title-text">
             {this.props.app_conf.your_order_title}
@@ -115,28 +127,56 @@ export default class Confirm extends Component {
             return (
               <OrderItemCard
                 orderItem={orderItem}
-                index={index}
-                increaseShoppingCartItem={this.props.increaseShoppingCartItem}
-                decreaseShoppingCartItem={this.props.decreaseShoppingCartItem}
                 mode={2}
                 key={`orderItemInShoppingCart${index}`}
               />
             );
           })}
         </div>
-        <div className="confirm__order-list__total">
-          <span className="confirm__order-list__total-title">
-            {this.props.app_conf.confirm_total}
-          </span>
-          <span className="confirm__order-list__total-number">
-            ${this.getTotalPrice()}
-          </span>
-        </div>
-        <div className="confirm__back-button-container">
-          <Link to={`/table/public`} className="confirm__back-button">
-            {this.props.app_conf.continue_order}
-          </Link>
-        </div>
+
+        {this.props.match.params.mode === "table" ? qr_section : null}
+
+        {this.props.match.params.mode === "preorder" ? (
+          <div>
+            <div className="confirm__order-list__total">
+              <span className="confirm__order-list__total-title">
+                {this.props.app_conf.confirm_total}
+              </span>
+              <span className="confirm__order-list__total-number">
+                ${this.getTotalPrice()}
+              </span>
+            </div>
+            <div className="confirm__back-button-container">
+              <Link
+                to={`/table/public/preorder`}
+                className="confirm__back-button"
+              >
+                {this.props.app_conf.continue_order}
+              </Link>
+            </div>
+          </div>
+        ) : null}
+        {this.props.match.params.mode === "table" ? (
+          <div className="confirm__footer">
+            <span className="confirm__footer__total">
+              <span className="text">{this.props.app_conf.total}</span>
+              <span className="number">${this.getTotalPrice()}</span>
+            </span>
+            <span className="confirm__footer__table-number">
+              <span className="text">
+                {this.props.app_conf.app_header_title}
+              </span>
+              <span className="number">{this.props.match.params.tableId}</span>
+            </span>
+            <span className="confirm__footer__order-number">
+              <span className="text">{this.props.app_conf.order}</span>
+              <span className="number">{this.props.match.params.orderId}</span>
+            </span>
+            <span className="confirm__footer__button">
+              <span>{this.props.app_conf.confirm_order}</span>
+            </span>
+          </div>
+        ) : null}
       </div>
     );
   }

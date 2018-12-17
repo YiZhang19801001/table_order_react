@@ -105,6 +105,60 @@ body {
   padding: 8px 10px;
 }
 
+.order .menu-cover {
+  position: fixed;
+  z-index: 500;
+  height: calc(100vh - 11vh);
+  width: 100vw;
+  left: 0;
+  bottom: 0;
+  background-color: #44444457;
+}
+
+.order .menu-err-dialog {
+  position: fixed;
+  z-index: 600;
+  height: 31vh;
+  width: 74vw;
+  background-color: white;
+  top: 25vh;
+  left: 13vw;
+  border-radius: 4px;
+}
+
+.order .menu-err-dialog .menu-close-button {
+  height: 18px;
+  line-height: 18px;
+  font-size: 15px;
+  padding: 10px 15px;
+}
+
+.order .menu-err-dialog .menu-error-icon {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  height: 50%;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+.order .menu-err-dialog .menu-error-message {
+  font-size: 14px;
+  font-weight: 300;
+  width: 80%;
+  margin: auto;
+  text-align: center;
+  color: #444444;
+}
+
 .head {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -798,11 +852,8 @@ body {
   text-align: center;
 }
 
-.confirm {
-  padding: 20px 0px;
-}
-
 .confirm .confirm__title {
+  margin-top: 20px;
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
@@ -977,5 +1028,119 @@ body {
   font-weight: 600;
   color: #ffffff;
   text-decoration: none;
+}
+
+.confirm .confirm__footer {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  height: 14vh;
+  background-color: #eaeaea;
+  position: fixed;
+  width: 100vw;
+  bottom: 0;
+  left: 0;
+}
+
+.confirm .confirm__footer .confirm__footer__total {
+  -webkit-box-flex: 2;
+      -ms-flex: 2;
+          flex: 2;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  height: 10vh;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+}
+
+.confirm .confirm__footer .confirm__footer__total .text {
+  height: 22px;
+  line-height: 22px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #444444;
+}
+
+.confirm .confirm__footer .confirm__footer__total .number {
+  height: 34px;
+  line-height: 34px;
+  font-size: 28px;
+  font-weight: bold;
+  color: #444444;
+}
+
+.confirm .confirm__footer .confirm__footer__table-number,
+.confirm .confirm__footer .confirm__footer__order-number {
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  height: 9vh;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+}
+
+.confirm .confirm__footer .confirm__footer__table-number .text,
+.confirm .confirm__footer .confirm__footer__order-number .text {
+  height: 22px;
+  line-height: 22px;
+  font-size: 16px;
+  font-weight: normal;
+  color: #444444;
+}
+
+.confirm .confirm__footer .confirm__footer__table-number .number,
+.confirm .confirm__footer .confirm__footer__order-number .number {
+  line-height: 22px;
+  height: 22px;
+  font-family: Montserrat;
+  font-size: 18px;
+  font-weight: 500;
+  color: #444444;
+}
+
+.confirm .confirm__footer .confirm__footer__button {
+  -webkit-box-flex: 2;
+      -ms-flex: 2;
+          flex: 2;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  background: #f55747;
+  height: 100%;
+  color: #fff;
+  font-weight: 600;
+  font-size: 18px;
 }
 

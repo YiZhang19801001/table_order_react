@@ -42,4 +42,8 @@ return [
     'confirm_total' => 'Estimating',
     //continue order
     'continue_order' => 'continue order',
+    //qr code tips for table order
+    'tableorder_qr_tips' => 'Tips: please show this Qr code to our staff, when you checkout.',
+    // title for error page
+    'menu' => 'Menu',
 ];

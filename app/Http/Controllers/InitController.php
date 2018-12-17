@@ -36,6 +36,7 @@ class InitController extends Controller
         /**return app_conf to client side */
         return response()->json([
             "app_conf" => $app_conf,
+            "userId" => uniqid(),
         ], 200);
     }
 }

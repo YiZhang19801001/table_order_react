@@ -42,5 +42,9 @@ return [
     'confirm_total' => '预计支付',
     //continue order
     'continue_order' => '继续点单',
+    //qr code tips for table order
+    'tableorder_qr_tips' => 'Tips: 买单时请将上方二维码出示给店员，谢谢！',
+    // title for error page
+    'menu' => '菜单',
 
 ];

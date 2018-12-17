@@ -14,17 +14,24 @@ require("./bootstrap");
 
 import ReactDom from "react-dom";
 import React, { Component } from "react";
-import { Route, BrowserRouter as Router } from "react-router-dom";
+import { Route, BrowserRouter as Router, Switch } from "react-router-dom";
 import Axios from "axios";
 
 import Order from "./components/Order";
 import Confirm from "./components/Confirm";
+import Menu from "./components/Menu";
 
 export default class App extends Component {
   constructor(props) {
     super(props);
 
-    this.state = { shoppingCartList: [], app_conf: {} };
+    this.state = {
+      shoppingCartList: [],
+      app_conf: {},
+      tableId: "",
+      orderId: "",
+      userId: ""
+    };
 
     this.updateShoppingCartList = this.updateShoppingCartList.bind(this);
     this.increaseShoppingCartItem = this.increaseShoppingCartItem.bind(this);
@@ -42,26 +49,7 @@ export default class App extends Component {
     }
 
     Axios.get(`/table/public/api/init/${lang}`).then(res => {
-      this.setState({ app_conf: res.data.app_conf });
-      if (this.state.app_conf.preorder) {
-        if (localStorage.getItem("preorderList")) {
-          this.setState({
-            shoppingCartList: JSON.parse(localStorage.getItem("preorderList"))
-          });
-        }
-      } else {
-        // Axios.post(`/table/public/api/initcart`)
-        //   .then(res => {
-        //     this.setState({ shoppingCartList: res.data.shoppingCartList });
-        //   })
-        //   .catch(err => {
-        //     console.log(err.response.data.message);
-        //   });
-
-        Echo.channel("tableOrder").listen("UpdateOrder", e => {
-          this.setState({ shoppingCartList: e.orderList });
-        });
-      }
+      this.setState({ app_conf: res.data.app_conf, userId: res.data.userId });
     });
   }
 
@@ -70,6 +58,7 @@ export default class App extends Component {
    *
    */
   updateOrderList(orderList) {
+    console.log("app.js/updateOrderList has been called", orderList);
     this.setState({ shoppingCartList: orderList });
   }
 
@@ -80,8 +69,9 @@ export default class App extends Component {
    *
    * @param {product} item
    */
-  updateShoppingCartList(item) {
-    if (this.state.app_conf.preorder) {
+  updateShoppingCartList(item, mode, action, orderId, tableNumber) {
+    if (mode === "preorder") {
+      console.log("update order list in preorder mode", item);
       let flag = false;
       for (let i = 0; i < this.state.shoppingCartList.length; i++) {
         if (
@@ -124,8 +114,17 @@ export default class App extends Component {
           }
         }
         if (flag) {
-          this.state.shoppingCartList[i].quantity++;
-          this.refreshStateShoppingCartList();
+          if (action == "add") {
+            this.state.shoppingCartList[i].quantity++;
+          } else if (action == "sub") {
+            if (this.state.shoppingCartList[i].quantity > 1) {
+              this.state.shoppingCartList[i].quantity--;
+            } else {
+              this.state.shoppingCartList.splice(i, 1);
+            }
+          }
+
+          this.refreshStateShoppingCartList(mode, action, item);
           break;
         }
       }
@@ -135,14 +134,14 @@ export default class App extends Component {
           item: item,
           quantity: 1
         });
-        this.refreshStateShoppingCartList();
+        this.refreshStateShoppingCartList(mode, "add", item);
       }
-    } else {
+    } else if (mode === "table") {
       axios.post("/table/public/api/orderitem", {
-        orderItem: payload,
-        orderId: state.orderId,
-        table_id: state.table_number,
-        lang: state.lang
+        orderItem: item,
+        orderId: orderId,
+        table_id: tableNumber,
+        lang: 1
       });
     }
   }
@@ -172,22 +171,30 @@ export default class App extends Component {
     this.refreshStateShoppingCartList();
   }
 
-  refreshStateShoppingCartList() {
+  /**
+   * update order list use setState method to update the list in all relative components
+   */
+  refreshStateShoppingCartList(mode, action, item) {
     const arrRes = this.state.shoppingCartList;
     this.setState({ shoppingCartList: arrRes });
-    localStorage.setItem(
-      "preorderList",
-      JSON.stringify(this.state.shoppingCartList)
-    );
-    Axios.post(`/table/public/api/test`, {
-      orderList: this.state.shoppingCartList
-    });
+    if (mode === "preorder") {
+      localStorage.setItem(
+        "preorderList",
+        JSON.stringify(this.state.shoppingCartList)
+      );
+    } else if (mode === "table") {
+      Axios.post("/table/public/api/updateorderlist", {
+        action: action,
+        orderItem: item,
+        userId: this.state.userId
+      });
+    }
   }
 
   render() {
     return (
       <Router>
-        <div>
+        <Switch>
           <Route
             exact
             path="/table/public/preorder"
@@ -214,6 +221,8 @@ export default class App extends Component {
                 app_conf={this.state.app_conf}
                 increaseShoppingCartItem={this.increaseShoppingCartItem}
                 decreaseShoppingCartItem={this.decreaseShoppingCartItem}
+                setOrderId={this.setOrderId}
+                setTableId={this.setTableId}
                 mode={"table"}
                 updateOrderList={this.updateOrderList}
                 {...props}
@@ -222,7 +231,7 @@ export default class App extends Component {
           />
           <Route
             exact
-            path="/table/public/confirm"
+            path="/table/public/confirm/:mode"
             render={props => (
               <Confirm
                 shoppingCartList={this.state.shoppingCartList}
@@ -231,7 +240,26 @@ export default class App extends Component {
               />
             )}
           />
-        </div>
+          <Route
+            exact
+            path="/table/public/confirm/:mode/:tableId/:orderId"
+            render={props => (
+              <Confirm
+                shoppingCartList={this.state.shoppingCartList}
+                app_conf={this.state.app_conf}
+                {...props}
+              />
+            )}
+          />
+          <Route
+            exact
+            path="/table/public/menu/:message"
+            render={props => <Menu app_conf={this.state.app_conf} {...props} />}
+          />
+          <Route
+            render={props => <Menu app_conf={this.state.app_conf} {...props} />}
+          />
+        </Switch>
       </Router>
     );
   }

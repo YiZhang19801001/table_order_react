@@ -31,11 +31,15 @@ export default class ProductCard extends Component {
       : "/table/public/images/layout/btn_sub_red.png";
 
     this.setState({ btnSub: buttonImg });
-    this.getProductQtyInOrderList(this.props.shoppingCartList);
+    if (this.props.mode !== "menu") {
+      this.getProductQtyInOrderList(this.props.shoppingCartList);
+    }
   }
 
   componentWillReceiveProps(newProps) {
-    this.getProductQtyInOrderList(newProps.shoppingCartList);
+    if (this.props.mode !== "menu") {
+      this.getProductQtyInOrderList(this.props.shoppingCartList);
+    }
   }
 
   getProductQtyInOrderList(arr) {
@@ -60,7 +64,7 @@ export default class ProductCard extends Component {
   decrease() {}
 
   render() {
-    const control_pannel =
+    const Control_Pannel =
       this.state.quantity > 0 ? (
         <div className="control-pannel">
           <div className="btn-sub">
@@ -90,7 +94,7 @@ export default class ProductCard extends Component {
           <div className="product-name">{this.props.product.name}</div>
           <div className="price-quantity">
             <div className="price">${this.props.product.price}</div>
-            {control_pannel}
+            {this.props.mode !== "menu" ? Control_Pannel : null}
           </div>
         </div>
         {this.state.toggleChoiceForm ? (
@@ -99,6 +103,9 @@ export default class ProductCard extends Component {
             product={this.props.product}
             updateShoppingCartList={this.props.updateShoppingCartList}
             app_conf={this.props.app_conf}
+            mode={this.props.mode}
+            orderId={this.props.orderId}
+            tableNumber={this.props.tableNumber}
           />
         ) : null}
       </div>

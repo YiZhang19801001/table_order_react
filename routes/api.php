@@ -31,3 +31,4 @@ Route::post('increase', 'OrderController@increase');
 Route::post('decrease', 'OrderController@decrease');
 Route::post('confirm', 'OrderController@confirmOrder');
 Route::post('test', 'HomeController@testBroadcast');
+Route::post('updateorderlist', 'OrderController@update');

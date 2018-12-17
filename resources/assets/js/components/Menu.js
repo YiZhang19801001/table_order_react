@@ -5,24 +5,15 @@ const queryString = require("query-string");
 
 import Head from "./Head";
 import ProductCard from "./ProductCard";
-import ShoppingCart from "./ShoppingCart";
-
-export default class Order extends Component {
+export default class Menu extends Component {
   constructor(props) {
     super(props);
-    this.state = {
-      categoryList: [],
-      productGroupList: [],
-      navBarItems: [],
-      shoppingCartList: []
-    };
 
-    this.redirectToMenu = this.redirectToMenu.bind(this);
+    this.state = { productGroupList: [], categoryList: [], showErr: true };
+    this.closeErrMsg = this.closeErrMsg.bind(this);
   }
 
   componentDidMount() {
-    console.log(this.props.match.params);
-
     Axios.get(`/table/public/api/products/1`).then(res => {
       this.setState({ productGroupList: res.data.products });
     });
@@ -30,39 +21,37 @@ export default class Order extends Component {
     Axios.get(`/table/public/api/categories/1`).then(res => {
       this.setState({ categoryList: res.data.categories });
     });
-
-    for (let index = 0; index < this.state.categoryList.length; index++) {
-      this.state.navBarItems[index] = {
-        lable: "nav" + this.state.categoryList[index].category_id,
-        target: "nav" + this.state.categoryList[index].category_id
-      };
-    }
-
-    this.setState({ shoppingCartList: this.props.shoppingCartList });
   }
 
-  componentWillReceiveProps(newProps) {
-    this.setState({ shoppingCartList: newProps.shoppingCartList });
-  }
-
-  redirectToMenu(msg) {
-    this.props.history.push(`/table/public/menu/${msg}`);
+  closeErrMsg() {
+    this.setState({ showErr: false });
   }
 
   render() {
-    const parsed = queryString.parse(this.props.location.search);
     return (
       <div className="order">
         <Head
-          title={
-            this.props.mode === "preorder"
-              ? this.props.app_conf.preorder_title
-              : `${this.props.app_conf.app_header_title} ${
-                  this.props.match.params.table
-                }`
-          }
-          btnLabel={this.props.app_conf.lang_switch_cn}
+          title={this.props.app_conf.menu}
+          mode={"menu"}
+          btnLabel={this.props.app_conf.lang_switch_en}
         />
+        {this.state.showErr ? <div className="menu-cover" /> : null}
+        {this.state.showErr ? (
+          <div className="menu-err-dialog">
+            <div onClick={this.closeErrMsg} className="menu-close-button">
+              X
+            </div>
+            <div className="menu-error-icon">
+              <img src="/table/public/images/layout/error.png" alt="" />
+              <span className="menu-error-title">Sorry!</span>
+            </div>
+            <div className="menu-error-message">
+              {this.props.match.params.message
+                ? this.props.match.params.message
+                : "This QR code is invalid.Please contact our staffs."}
+            </div>
+          </div>
+        ) : null}
         <div className="main">
           <div className="category-list">
             {this.state.categoryList.map(category => {
@@ -100,16 +89,10 @@ export default class Order extends Component {
                   {productGroup.products.map(product => {
                     return (
                       <ProductCard
-                        shoppingCartList={this.state.shoppingCartList}
-                        updateShoppingCartList={
-                          this.props.updateShoppingCartList
-                        }
                         key={`product${product.product_id}`}
                         product={product}
                         app_conf={this.props.app_conf}
-                        mode={this.props.mode}
-                        orderId={this.props.match.params.orderid}
-                        tableNumber={this.props.match.params.table}
+                        mode={"menu"}
                       />
                     );
                   })}
@@ -118,20 +101,6 @@ export default class Order extends Component {
             })}
           </div>
         </div>
-        <ShoppingCart
-          app_conf={this.props.app_conf}
-          shoppingCartList={this.state.shoppingCartList}
-          increaseShoppingCartItem={this.props.increaseShoppingCartItem}
-          decreaseShoppingCartItem={this.props.decreaseShoppingCartItem}
-          updateShoppingCartList={this.props.updateShoppingCartList}
-          updateOrderList={this.props.updateOrderList}
-          mode={this.props.mode}
-          orderId={this.props.match.params.orderid}
-          tableNumber={this.props.match.params.table}
-          cdt={parsed.cdt}
-          v={parsed.v}
-          redirectToMenu={this.redirectToMenu}
-        />
       </div>
     );
   }

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\newOrderItemAdded;
+use App\Events\UpdateOrder;
 use App\Order;
 use App\OrderExt;
 use App\OrderHistory;
@@ -31,97 +31,70 @@ class OrderController extends Controller
     /** Todo:
      * 1. save orderList to database table
      * 2. create broadcast
-     * 3. get newest order list*/
+     * 3. get newest order list
+     * */
 
     public function post(Request $request)
     {
-        if (isset($request->preorder) && $request->preorder === true) {
-            return response()->json(200);
-        }
         $mode = config('app.show_options');
         $new_item = $request->orderItem;
-        $arr_order_items = Temp_order_item::where('product_id', $new_item["product_id"])->where('order_id', $request->orderId)->where('oc_order_id', null)->get();
-
-        /** if array is empty then insert straight away */
-        if (count($arr_order_items) < 1) {
-            $this->createOrderHelper($new_item, $request->orderId, $mode);
-        } else if (!$mode)
-        /**if $mode is false, no options showed, only check product_id is already in the temp_order_item or not */ {
-            Temp_order_item::where('id', $arr_order_items[0]["id"])->increment('quantity');
-        } else
-        /**if $mode is true, further check */
-        {
-            /**check new item already in the list or not
-             * if already have then update the quantity only
-             * else insert as new recorder in temp_order_items table
-             */
-            $alreadyHave = false; //flag for ext
-            $optionIsSame = false; //flag for option
-
-            /**to determin is the new_item already have or not, should check TWO things
-             * Step 1. if their is a product_id match? not-> insert new, yes-> go step 2
-             * Step 2. find $id as $order_item_id in temp_pickChoice table. will get an arr_choices
-             * Step 3. check arr_choices->(choice_type,piced_Choice) and $new_item->choices(choice_type,piced_Choice) is matched or not. no->insert new, yes->increate the quantity in temp_order_items table
-             */
-
-            /** 1. return an array which is same product_id as new_item, but may with different taste or options*/
-            $arr_order_items = Temp_order_item::where('product_id', $new_item["product_id"])->where('order_id', $request->orderId)->get();
-
-            /**check 3 columns type, picked_Choice and order_item_id */
-            foreach ($arr_order_items as $order_item) {
-                if (count($new_item["choices"]) != 0) {
-                    /** order_item_id && choice_type will get single record then compare with the params */
-                    foreach ($new_item["choices"] as $new_choice) {
-                        $choice_in_DB = Temp_pickedChoice::where("order_item_id", $order_item["id"])->where("choice_type", $new_choice["type"])->first();
-                        if ($choice_in_DB["picked_Choice"] == $new_choice["pickedChoice"]) {
-                            $alreadyHave = true;
-                        } else {
-                            $alreadyHave = false;
-                            break;
+        $orderRow = TempOrder::where('id', $request->orderId)->first();
+        $order_list_string = $orderRow->order_list_string;
+        // if $order_list_string is null or empty add straight away
+        if ($order_list_string === null || $order_list_string === "") {
+            $orderRow->order_list_string = array();
+            array_push($orderRow->order_list_string, json_encode(new_item));
+        } else {
+            $flag = false;
+            $orderObject = json_decode($order_list_string);
+            foreach ($orderObject as $orderItem) {
+                // return response()->json($orderItem);
+                if ($orderItem->item->product_id === $new_item["product_id"]) {
+                    $flag = true;
+                    if (count($orderItem->item->options) > 0) {
+                        for ($i = 0; $i < count($orderItem->item->options) - 1; $i++) {
+                            if ($orderItem->item->options[i]["pickedOption"] !== $new_item["options"][i]["pickedOption"]) {
+                                $flag = false;
+                                break;
+                            }
                         }
-                    }
-                } else {
-                    $alreadyHave = true;
-                }
-                if (count($new_item["options"]) != 0) {
-                    foreach ($new_item["options"] as $new_option) {
-                        $option_in_DB = Temp_pickedOption::where("order_item_id", $order_item["id"])->where("option_name", $new_option["option_name"])->first();
-                        if ($option_in_DB["pickedOption"] == $new_option["pickedOption"]) {
-                            $optionIsSame = true;
-                        } else {
-                            $optionIsSame = false;
-                            break;
-                        }
-                    }
-                } else {
-                    $optionIsSame = true;
-                }
-                if ($alreadyHave && $optionIsSame) {
-                    Temp_order_item::where('id', $order_item["id"])->increment('quantity');
 
-                    /**record found stop the loop, otherwise duplicate record will add */
+                    }
+
+                    if ($flag === false || count($orderItem->item->choices) < 1) {
+                        break;
+                    } else {
+                        for ($i = 0; $i < count($orderItem->item->choices) - 1; $i++) {
+                            if ($orderItem->item->choices[i]["pickedChoice"] !== $new_item["choices"][i]["pickedChoice"]) {
+                                $flag = false;
+                                break;
+                            }
+                        }
+
+                    }
+                }
+                if ($flag) {
+                    $orderItem->quantity++;
+                    $orderRow->order_list_string = json_encode($orderObject);
+
                     break;
                 }
+            }
+            if (!$flag) {
+                array_push($orderObject, array('item' => $new_item, 'quantity' => 1));
+                $orderRow->order_list_string = json_encode($orderObject);
 
             }
-            //use for debuging.
-            //return response()->json(["alreadyHave"=>$alreadyHave,"optionIsSame"=>$optionIsSame]);
-            if (!$alreadyHave || !$optionIsSame) {
-                $this->createOrderHelper($new_item, $request->orderId);
-            }
         }
-        $order = $this->fetchOrderListHelper($request->orderId, $request->table_id, $request->lang);
-        broadcast(new newOrderItemAdded($request->orderId));
-        return response()->json($order);
+
+        $orderRow->save();
+        broadcast(new UpdateOrder($request->orderId));
+        return response()->json(json_decode($orderRow->order_list_string));
     }
 
     /** fetch the up to date order list once */
     public function getCart(Request $request)
     {
-        /** check is preorder or not */
-        if (isset($request->preorder) && $request->preorder === true) {
-            return $request->json(200);
-        }
         /**validate users */
         //check if this QRcode contain all infos with correct format
         if ($request->cdt == null || $request->v == null) {
@@ -168,8 +141,9 @@ class OrderController extends Controller
         }
         /**end validation */
 
-        $order = $this->fetchOrderListHelper($request->order_id, $request->table_id, $request->lang);
-        return response()->json($order);
+        $order = TempOrder::where('id', $request->order_id)->select('order_list_string')->first();
+
+        return response()->json(json_decode($order->order_list_string));
     }
 
     public function fetchOrderListHelper($order_id, $table_id, $lang)
@@ -344,7 +318,7 @@ class OrderController extends Controller
         $order_id = $request->orderId;
         TempOrderItem::whereId($target_item["item"]["order_item_id"])->increment("quantity");
 
-        broadcast(new newOrderItemAdded($request->orderId));
+        broadcast(new UpdateOrder($request->orderId));
 
         return $target_item;
     }
@@ -359,7 +333,7 @@ class OrderController extends Controller
         if ($num["quantity"] == 0) {
             TempOrderItem::whereId($target_item["item"]["order_item_id"])->delete();
         }
-        broadcast(new newOrderItemAdded($request->orderId));
+        broadcast(new UpdateOrder($request->orderId));
         return $target_item;
     }
 
@@ -381,11 +355,13 @@ class OrderController extends Controller
         foreach ($new_item["choices"] as $choice) {
             $new_pickedChoice = new TempPickedChoice;
 
-            $new_pickedChoice->product_ext_id = $choice["product_ext_id"];
+            $pickChoiceDecode = json_decode($choice["pickedChoice"]);
+
+            $new_pickedChoice->product_ext_id = $pickChoiceDecode->product_ext_id;
             $new_pickedChoice->order_item_id = $new_order_item->id;
             $new_pickedChoice->choice_type = $choice["type"];
-            $new_pickedChoice->picked_Choice = $choice["pickedChoice"];
-            $new_pickedChoice->price = $choice["price"];
+            $new_pickedChoice->picked_Choice = $pickChoiceDecode->name;
+            $new_pickedChoice->price = $pickChoiceDecode->price;
 
             $new_pickedChoice->save();
         }
@@ -428,7 +404,7 @@ class OrderController extends Controller
         //update temp_order_item
         $this->changeTempOrderItemsStatus($new_order->id, $request->orderList);
 
-        broadcast(new newOrderItemAdded($request->orderId));
+        broadcast(new UpdateOrder($request->orderId));
         return response()->json(["new_order" => $new_order], 200);
 
     }
@@ -642,6 +618,65 @@ class OrderController extends Controller
             }
 
         }
+    }
+
+    public function update(Request $request)
+    {
+        $mode = config('app.show_options');
+        $new_item = $request->orderItem;
+        $orderRow = new TempOrder;
+        $orderRow = TempOrder::where('id', $request->orderId)->first();
+
+// if $order_list_string is null or empty add straight away
+        if ($orderRow === null) {
+            $orderRow["order_list_string"] = array();
+            array_push($orderRow["order_list_string"], json_encode(new_item));
+        } else {
+            $flag = false;
+            $order_list_string = $orderRow->order_list_string;
+            $orderObject = json_decode($order_list_string);
+            foreach ($orderObject as $orderItem) {
+                // return response()->json($orderItem);
+                if ($orderItem->item->product_id === $new_item["product_id"]) {
+                    $flag = true;
+                    if (count($orderItem->item->options) > 0) {
+                        for ($i = 0; $i < count($orderItem->item->options) - 1; $i++) {
+                            if ($orderItem->item->options[i]["pickedOption"] !== $new_item["options"][i]["pickedOption"]) {
+                                $flag = false;
+                                break;
+                            }
+                        }
+                    }
+                    if ($flag === false || count($orderItem->item->choices) < 1) {
+                        break;
+                    } else {
+                        for ($i = 0; $i < count($orderItem->item->choices) - 1; $i++) {
+                            if ($orderItem->item->choices[i]["pickedChoice"] !== $new_item["choices"][i]["pickedChoice"]) {
+                                $flag = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if ($flag) {
+                    if ($request->action === 'add') {
+                        $orderItem->quantity++;
+                    }
+                    $orderRow->order_list_string = json_encode($orderObject);
+
+                    break;
+                }
+            }
+            if (!$flag && $request->action === 'add') {
+                array_push($orderObject, array('item' => $new_item, 'quantity' => 1));
+                $orderRow->order_list_string = json_encode($orderObject);
+            }
+        }
+
+        $orderRow->save();
+        broadcast(new UpdateOrder($request->orderId, $request->user_id, $request->orderItem));
+        return response()->json(json_decode($orderRow->order_list_string));
+
     }
 
 }

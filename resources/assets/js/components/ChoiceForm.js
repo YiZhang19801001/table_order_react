@@ -26,7 +26,12 @@ export default class ChoiceForm extends Component {
    * call the function in app.js to update details of shopping cart item list
    */
   updateShoppingCartList() {
-    this.props.updateShoppingCartList(this.state.product);
+    this.props.updateShoppingCartList(
+      this.state.product,
+      this.props.mode,
+      this.props.orderId,
+      this.props.tableNumber
+    );
     this.props.closeChoiceForm();
   }
 

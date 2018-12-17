@@ -12,15 +12,19 @@ class UpdateOrder implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $orderList;
+    public $orderId;
+    public $orderItem;
+    public $userId;
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($orderList)
+    public function __construct($orderId, $orderItem, $userId)
     {
-        $this->orderList = $orderList;
+        $this->orderId = $orderId;
+        $this->orderItem = $orderItem;
+        $this->userId = $userId;
     }
     /**
      * Get the channels the event should broadcast on.
@@ -34,6 +38,8 @@ class UpdateOrder implements ShouldBroadcast
     public function broadcastWith() /**add data to the broadcast event */
     {
         //return $this->orderItem;
-        return ["orderList" => $this->orderList];
+        return ["orderId" => $this->orderId,
+            "orderItem" => $this->orderItem,
+            "userId" => $this->userId];
     }
 }
