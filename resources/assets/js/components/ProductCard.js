@@ -38,7 +38,7 @@ export default class ProductCard extends Component {
 
   componentWillReceiveProps(newProps) {
     if (this.props.mode !== "menu") {
-      this.getProductQtyInOrderList(this.props.shoppingCartList);
+      this.getProductQtyInOrderList(newProps.shoppingCartList);
     }
   }
 

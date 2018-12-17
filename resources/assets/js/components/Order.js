@@ -21,7 +21,7 @@ export default class Order extends Component {
   }
 
   componentDidMount() {
-    console.log(this.props.match.params);
+    //console.log(this.props.match.params);
 
     Axios.get(`/table/public/api/products/1`).then(res => {
       this.setState({ productGroupList: res.data.products });
@@ -131,6 +131,7 @@ export default class Order extends Component {
           cdt={parsed.cdt}
           v={parsed.v}
           redirectToMenu={this.redirectToMenu}
+          userId={this.props.userId}
         />
       </div>
     );

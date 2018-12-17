@@ -24,11 +24,19 @@ export default class ChoiceForm extends Component {
 
   /**
    * call the function in app.js to update details of shopping cart item list
+   *
+   * @param {bool} isCallApi- will call api if true and update database also broadcasting this item to the channel
+   * @param {product} orderItem- new order item need to be modified
+   * @param {'add' or 'sub'} action- modifier
+   * @param {string} orderId- order id is the PK in temp_orders table
+   * @param {string} tableId- table id
    */
   updateShoppingCartList() {
     this.props.updateShoppingCartList(
+      true,
       this.state.product,
       this.props.mode,
+      "add",
       this.props.orderId,
       this.props.tableNumber
     );

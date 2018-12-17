@@ -58,7 +58,7 @@ export default class App extends Component {
    *
    */
   updateOrderList(orderList) {
-    console.log("app.js/updateOrderList has been called", orderList);
+    //console.log("app.js/updateOrderList has been called", orderList);
     this.setState({ shoppingCartList: orderList });
   }
 
@@ -69,80 +69,87 @@ export default class App extends Component {
    *
    * @param {product} item
    */
-  updateShoppingCartList(item, mode, action, orderId, tableNumber) {
-    if (mode === "preorder") {
-      console.log("update order list in preorder mode", item);
-      let flag = false;
-      for (let i = 0; i < this.state.shoppingCartList.length; i++) {
-        if (
-          this.state.shoppingCartList[i].item.product_id === item.product_id
-        ) {
-          flag = true;
-          if (this.state.shoppingCartList[i].item.options.length > 0) {
-            for (
-              let a = 0;
-              a < this.state.shoppingCartList[i].item.options.length;
-              a++
-            ) {
-              const option = this.state.shoppingCartList[i].item.options[a];
-              const new_option = item.options[a];
-              if (option.pickedOption !== new_option) {
-                flag = false;
-                break;
-              }
-            }
-          }
-
-          if (
-            flag === false ||
-            this.state.shoppingCartList[i].item.choices.length < 1
+  updateShoppingCartList(isCallApi, item, mode, action, orderId, tableId) {
+    console.log("update order list in preorder mode", item);
+    console.log("mode", mode);
+    console.log("action", action);
+    let flag = false;
+    for (let i = 0; i < this.state.shoppingCartList.length; i++) {
+      if (this.state.shoppingCartList[i].item.product_id === item.product_id) {
+        flag = true;
+        if (this.state.shoppingCartList[i].item.options.length > 0) {
+          for (
+            let a = 0;
+            a < this.state.shoppingCartList[i].item.options.length;
+            a++
           ) {
-            break;
-          } else {
-            for (
-              let b = 0;
-              b < this.state.shoppingCartList[i].item.choices.length;
-              b++
-            ) {
-              const choice = this.state.shoppingCartList[i].item.choices[b];
-              const new_choice = item.choices[b];
-              if (choice.pickedChoice !== new_choice.pickedChoice) {
-                flag = false;
-                break;
-              }
+            const option = this.state.shoppingCartList[i].item.options[a];
+            const new_option = item.options[a];
+            if (option.pickedOption !== new_option) {
+              flag = false;
+              break;
             }
           }
         }
-        if (flag) {
-          if (action == "add") {
-            this.state.shoppingCartList[i].quantity++;
-          } else if (action == "sub") {
-            if (this.state.shoppingCartList[i].quantity > 1) {
-              this.state.shoppingCartList[i].quantity--;
-            } else {
-              this.state.shoppingCartList.splice(i, 1);
-            }
-          }
 
-          this.refreshStateShoppingCartList(mode, action, item);
+        if (
+          flag === false ||
+          this.state.shoppingCartList[i].item.choices.length < 1
+        ) {
           break;
+        } else {
+          for (
+            let b = 0;
+            b < this.state.shoppingCartList[i].item.choices.length;
+            b++
+          ) {
+            const choice = this.state.shoppingCartList[i].item.choices[b];
+            const new_choice = item.choices[b];
+            if (choice.pickedChoice !== new_choice.pickedChoice) {
+              flag = false;
+              break;
+            }
+          }
         }
       }
-      // if product_id not exist add new
-      if (!flag) {
-        this.state.shoppingCartList.push({
-          item: item,
-          quantity: 1
-        });
-        this.refreshStateShoppingCartList(mode, "add", item);
+      if (flag) {
+        if (action == "add") {
+          this.state.shoppingCartList[i].quantity++;
+        } else if (action == "sub") {
+          if (this.state.shoppingCartList[i].quantity > 1) {
+            this.state.shoppingCartList[i].quantity--;
+          } else {
+            this.state.shoppingCartList.splice(i, 1);
+          }
+        }
+
+        this.refreshStateShoppingCartList(
+          isCallApi,
+          mode,
+          action,
+          item,
+          orderId,
+          tableId
+        );
+
+        break;
       }
-    } else if (mode === "table") {
-      axios.post("/table/public/api/orderitem", {
-        orderItem: item,
-        orderId: orderId,
-        table_id: tableNumber,
-        lang: 1
+    }
+    // if product_id not exist add new
+    if (!flag && action === "add") {
+      this.state.shoppingCartList.push({
+        item: item,
+        quantity: 1
       });
+
+      this.refreshStateShoppingCartList(
+        isCallApi,
+        mode,
+        action,
+        item,
+        orderId,
+        tableId
+      );
     }
   }
 
@@ -174,19 +181,32 @@ export default class App extends Component {
   /**
    * update order list use setState method to update the list in all relative components
    */
-  refreshStateShoppingCartList(mode, action, item) {
+  refreshStateShoppingCartList(
+    isCallApi,
+    mode,
+    action,
+    item,
+    orderId,
+    tableId
+  ) {
     const arrRes = this.state.shoppingCartList;
     this.setState({ shoppingCartList: arrRes });
+    console.log("refresh is call api: ", isCallApi);
+    console.log("refresh mode: ", mode);
+    console.log("refresh item: ", item);
     if (mode === "preorder") {
       localStorage.setItem(
         "preorderList",
         JSON.stringify(this.state.shoppingCartList)
       );
-    } else if (mode === "table") {
+    } else if (mode === "table" && isCallApi === true) {
+      //console.log(this.state.userId);
       Axios.post("/table/public/api/updateorderlist", {
         action: action,
         orderItem: item,
-        userId: this.state.userId
+        userId: this.state.userId,
+        orderId: orderId,
+        tableId: tableId
       });
     }
   }
@@ -225,6 +245,7 @@ export default class App extends Component {
                 setTableId={this.setTableId}
                 mode={"table"}
                 updateOrderList={this.updateOrderList}
+                userId={this.state.userId}
                 {...props}
               />
             )}

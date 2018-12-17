@@ -39,11 +39,12 @@ class OrderController extends Controller
         $mode = config('app.show_options');
         $new_item = $request->orderItem;
         $orderRow = TempOrder::where('id', $request->orderId)->first();
+        //return $orderRow->order_list_string;
         $order_list_string = $orderRow->order_list_string;
         // if $order_list_string is null or empty add straight away
-        if ($order_list_string === null || $order_list_string === "") {
-            $orderRow->order_list_string = array();
-            array_push($orderRow->order_list_string, json_encode(new_item));
+        if ($order_list_string === "[]") {
+            $newOrderItem = ['item'=>$request->orderItem,'quantity'=>1];
+            $orderRow->order_list_string = '['.json_encode($newOrderItem).']';
         } else {
             $flag = false;
             $orderObject = json_decode($order_list_string);
@@ -88,7 +89,7 @@ class OrderController extends Controller
         }
 
         $orderRow->save();
-        broadcast(new UpdateOrder($request->orderId));
+        broadcast(new UpdateOrder($request->orderId,$request->orderItem,$request->userId));
         return response()->json(json_decode($orderRow->order_list_string));
     }
 
@@ -140,8 +141,17 @@ class OrderController extends Controller
             }
         }
         /**end validation */
+        
+        $order = TempOrder::where('id', $request->order_id)->first();
+        if($order===null)
+        {
+            $order = new TempOrder;
 
-        $order = TempOrder::where('id', $request->order_id)->select('order_list_string')->first();
+            $order["id"] = $request->order_id;
+            $order["table_number"] = $request->table_id;
+            $order["order_list_string"] = "[]";
+            $order->save(); 
+        }
 
         return response()->json(json_decode($order->order_list_string));
     }
@@ -622,15 +632,16 @@ class OrderController extends Controller
 
     public function update(Request $request)
     {
+        broadcast(new UpdateOrder($request->orderId, $request->orderItem, $request->userId, $request->action));
+
         $mode = config('app.show_options');
         $new_item = $request->orderItem;
-        $orderRow = new TempOrder;
         $orderRow = TempOrder::where('id', $request->orderId)->first();
-
 // if $order_list_string is null or empty add straight away
         if ($orderRow === null) {
-            $orderRow["order_list_string"] = array();
-            array_push($orderRow["order_list_string"], json_encode(new_item));
+            $orderRow = new TempOrder;
+            $newOrderItem = ['item'=>$new_item,'quantity'=>1];
+            $orderRow->order_list_string = '['.json_encode($newOrderItem).']';
         } else {
             $flag = false;
             $order_list_string = $orderRow->order_list_string;
@@ -674,7 +685,6 @@ class OrderController extends Controller
         }
 
         $orderRow->save();
-        broadcast(new UpdateOrder($request->orderId, $request->user_id, $request->orderItem));
         return response()->json(json_decode($orderRow->order_list_string));
 
     }

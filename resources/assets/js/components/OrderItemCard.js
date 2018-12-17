@@ -28,11 +28,25 @@ export default class OrderItemCard extends Component {
   }
 
   increase() {
-    this.props.increaseShoppingCartItem(this.props.index);
+    this.props.updateShoppingCartList(
+      true,
+      this.state.orderItem.item,
+      this.props.mode,
+      "add",
+      this.props.orderId,
+      this.props.tableNumber
+    );
   }
 
   decrease() {
-    this.props.decreaseShoppingCartItem(this.props.index);
+    this.props.updateShoppingCartList(
+      true,
+      this.state.orderItem.item,
+      this.props.mode,
+      "sub",
+      this.props.orderId,
+      this.props.tableNumber
+    );
   }
 
   render() {

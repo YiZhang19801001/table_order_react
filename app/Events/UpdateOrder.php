@@ -15,16 +15,18 @@ class UpdateOrder implements ShouldBroadcast
     public $orderId;
     public $orderItem;
     public $userId;
+    public $action;
     /**
      * Create a new event instance.
      *
      * @return void
      */
-    public function __construct($orderId, $orderItem, $userId)
+    public function __construct($orderId, $orderItem, $userId, $action)
     {
         $this->orderId = $orderId;
         $this->orderItem = $orderItem;
         $this->userId = $userId;
+        $this->action = $action;
     }
     /**
      * Get the channels the event should broadcast on.
@@ -40,6 +42,7 @@ class UpdateOrder implements ShouldBroadcast
         //return $this->orderItem;
         return ["orderId" => $this->orderId,
             "orderItem" => $this->orderItem,
-            "userId" => $this->userId];
+            "userId" => $this->userId,
+            'action' => $this->action];
     }
 }

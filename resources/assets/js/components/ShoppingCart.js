@@ -38,7 +38,7 @@ export default class ShoppingCart extends Component {
 
     if (this.props.mode === "preorder") {
       if (localStorage.getItem("preorderList")) {
-        console.log("read data from localstorage");
+        //console.log("read data from localstorage");
         this.setState({
           shoppingCartList: JSON.parse(localStorage.getItem("preorderList"))
         });
@@ -65,8 +65,8 @@ export default class ShoppingCart extends Component {
         });
 
       Echo.channel("tableOrder").listen("UpdateOrder", e => {
-        console.log("props orderId", this.props.orderId);
-        console.log("e orderId", e.orderId);
+        // console.log("e userId", e.userId);
+        // console.log("props userId", this.props.userId);
         if (e.orderId == this.props.orderId && e.userId !== this.props.userId) {
           // Axios.post(`/table/public/api/initcart`, {
           //   order_id: this.props.orderId,
@@ -86,6 +86,7 @@ export default class ShoppingCart extends Component {
           //     console.log(err.response.data.message);
           //   });
           this.props.updateShoppingCartList(
+            false,
             e.orderItem,
             "table",
             e.action,
@@ -154,9 +155,12 @@ export default class ShoppingCart extends Component {
             return (
               <OrderItemCard
                 orderItem={orderItem}
-                index={index}
+                updateShoppingCartList={this.props.updateShoppingCartList}
                 increaseShoppingCartItem={this.props.increaseShoppingCartItem}
                 decreaseShoppingCartItem={this.props.decreaseShoppingCartItem}
+                mode={this.props.mode}
+                orderId={this.props.orderid}
+                tableNumber={this.props.tableNumber}
                 key={`orderItemInShoppingCart${index}`}
                 mode={1}
               />
@@ -169,7 +173,10 @@ export default class ShoppingCart extends Component {
             return (
               <OrderItemCard
                 orderItem={orderItem}
-                index={index}
+                mode={this.props.mode}
+                orderId={this.props.orderid}
+                tableNumber={this.props.tableNumber}
+                updateShoppingCartList={this.props.updateShoppingCartList}
                 increaseShoppingCartItem={this.props.increaseShoppingCartItem}
                 decreaseShoppingCartItem={this.props.decreaseShoppingCartItem}
                 key={`orderItemInShoppingCart${index}`}
@@ -180,8 +187,14 @@ export default class ShoppingCart extends Component {
           {/* {this.state.orderShoppingCartList.map((orderItem, index) => {
             return (
               <OrderItemCard
+              updateShoppingCartList={
+                          this.props.updateShoppingCartList
+                        }
                 orderItem={orderItem}
                 key={`orderItemInShoppingCart${index}`}
+                                mode={this.props.mode}
+                orderId={this.props.orderid}
+                tableNumber={this.props.tableNumber}
                 mode={3}
               />
             );
