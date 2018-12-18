@@ -43,12 +43,14 @@ export default class Order extends Component {
       });
     });
 
-    this.props.setOriginPath(
-      `${this.props.location.pathname}${this.props.location.search}`
-    );
+    if (this.props.mode === "table") {
+      this.props.setOriginPath(
+        `${this.props.location.pathname}${this.props.location.search}`
+      );
 
-    const pathQuery = queryString.parse(this.props.location.search);
-    this.props.setV(pathQuery.v);
+      const pathQuery = queryString.parse(this.props.location.search);
+      this.props.setV(pathQuery.v);
+    }
 
     for (let index = 0; index < this.state.categoryList.length; index++) {
       this.state.navBarItems[index] = {

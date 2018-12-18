@@ -19,7 +19,7 @@
 Route::get('init/{lang}', 'InitController@index');
 
 //list the categories
-Route::get('categories/{lang}', 'categoryController@index');
+Route::get('categories/{lang}', 'CategoryController@index');
 Route::get('products/{lang}', 'ProductController@index');
 // Todo: add order, MUST announce Server
 //Route::post('order','OrderController@create');
