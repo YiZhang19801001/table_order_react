@@ -12,6 +12,7 @@ export default class ShoppingCart extends Component {
       shoppingCartIconImage: "",
       shoppingCartList: [],
       orderShoppingCartList: [],
+      historyCartList: [],
       expand: false
     };
 
@@ -57,7 +58,8 @@ export default class ShoppingCart extends Component {
         .then(res => {
           console.log("response call initcart", res);
           // this.setState({ shoppingCartList: res.data.pending_list });
-          this.props.updateOrderList(res.data);
+          this.props.updateOrderList(res.data.pendingList);
+          this.props.updateHistoryCartList(res.data.historyList);
           // this.setState({ orderShoppingCartList: res.data.ordered_list });
         })
         .catch(err => {
@@ -65,26 +67,10 @@ export default class ShoppingCart extends Component {
         });
 
       Echo.channel("tableOrder").listen("UpdateOrder", e => {
-        // console.log("e userId", e.userId);
-        // console.log("props userId", this.props.userId);
+        console.log("listened on shopping cart updateorder");
+        console.log("e.orderId: ", e.orderId);
+        console.log("this.props.orderId: ", this.props.orderId);
         if (e.orderId == this.props.orderId && e.userId !== this.props.userId) {
-          // Axios.post(`/table/public/api/initcart`, {
-          //   order_id: this.props.orderId,
-          //   cdt: this.props.cdt,
-          //   v: this.props.v,
-          //   table_id: this.props.tableNumber,
-          //   lang: 1,
-          //   preorder: false
-          // })
-          //   .then(res => {
-          //     console.log("response call initcart trigger by broadcast", res);
-          //     // this.setState({ shoppingCartList: res.data.pending_list });
-          //     this.props.updateOrderList(res.data);
-          //     this.setState({ orderShoppingCartList: res.data });
-          //   })
-          //   .catch(err => {
-          //     console.log(err.response.data.message);
-          //   });
           this.props.updateShoppingCartList(
             false,
             e.orderItem,
@@ -95,11 +81,43 @@ export default class ShoppingCart extends Component {
           );
         }
       });
+
+      Echo.channel("tableOrder").listen("ConfirmOrder", e => {
+        console.log("listened on shopping cart");
+        console.log("e.orderId: ", e.orderId);
+        console.log("this.props.orderId: ", this.props.orderId);
+        if (e.orderId == this.props.orderId) {
+          Axios.post(`/table/public/api/initcart`, {
+            order_id: this.props.orderId,
+            cdt: this.props.cdt,
+            v: this.props.v,
+            table_id: this.props.tableNumber,
+            lang: 1
+          })
+            .then(res => {
+              console.log("call initCart, trigger by broadcast", res);
+              // this.setState({ shoppingCartList: res.data.pending_list });
+              this.props.updateOrderList(res.data.pendingList);
+              this.props.updateHistoryList(res.data.historyList);
+              this.setState({
+                shoppingCartList: res.data.pendingList,
+                historyCartList: res.data.historyList
+              });
+              // this.setState({ orderShoppingCartList: res.data.ordered_list });
+            })
+            .catch(err => {
+              this.props.redirectToMenu(err.response.data.message);
+            });
+        }
+      });
     }
   }
 
   componentWillReceiveProps(newProps) {
-    this.setState({ shoppingCartList: newProps.shoppingCartList });
+    this.setState({
+      shoppingCartList: newProps.shoppingCartList,
+      historyCartList: newProps.historyCartList
+    });
   }
 
   /**
@@ -158,8 +176,8 @@ export default class ShoppingCart extends Component {
                 updateShoppingCartList={this.props.updateShoppingCartList}
                 increaseShoppingCartItem={this.props.increaseShoppingCartItem}
                 decreaseShoppingCartItem={this.props.decreaseShoppingCartItem}
-                mode={this.props.mode}
-                orderId={this.props.orderid}
+                appMode={this.props.mode}
+                orderId={this.props.orderId}
                 tableNumber={this.props.tableNumber}
                 key={`orderItemInShoppingCart${index}`}
                 mode={1}
@@ -173,8 +191,8 @@ export default class ShoppingCart extends Component {
             return (
               <OrderItemCard
                 orderItem={orderItem}
-                mode={this.props.mode}
-                orderId={this.props.orderid}
+                appMode={this.props.mode}
+                orderId={this.props.orderId}
                 tableNumber={this.props.tableNumber}
                 updateShoppingCartList={this.props.updateShoppingCartList}
                 increaseShoppingCartItem={this.props.increaseShoppingCartItem}
@@ -184,21 +202,16 @@ export default class ShoppingCart extends Component {
               />
             );
           })}
-          {/* {this.state.orderShoppingCartList.map((orderItem, index) => {
+          {this.state.historyCartList.map((orderItem, index) => {
             return (
               <OrderItemCard
-              updateShoppingCartList={
-                          this.props.updateShoppingCartList
-                        }
+                app_conf={this.props.app_conf}
                 orderItem={orderItem}
-                key={`orderItemInShoppingCart${index}`}
-                                mode={this.props.mode}
-                orderId={this.props.orderid}
-                tableNumber={this.props.tableNumber}
+                key={`historyItemInShoppingCart${index}`}
                 mode={3}
               />
             );
-          })} */}
+          })}
         </div>
       );
     return (

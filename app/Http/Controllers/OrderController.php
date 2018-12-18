@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ConfirmOrder;
 use App\Events\UpdateOrder;
 use App\Order;
 use App\OrderExt;
@@ -43,8 +44,8 @@ class OrderController extends Controller
         $order_list_string = $orderRow->order_list_string;
         // if $order_list_string is null or empty add straight away
         if ($order_list_string === "[]") {
-            $newOrderItem = ['item'=>$request->orderItem,'quantity'=>1];
-            $orderRow->order_list_string = '['.json_encode($newOrderItem).']';
+            $newOrderItem = ['item' => $request->orderItem, 'quantity' => 1];
+            $orderRow->order_list_string = '[' . json_encode($newOrderItem) . ']';
         } else {
             $flag = false;
             $orderObject = json_decode($order_list_string);
@@ -89,7 +90,7 @@ class OrderController extends Controller
         }
 
         $orderRow->save();
-        broadcast(new UpdateOrder($request->orderId,$request->orderItem,$request->userId));
+        broadcast(new UpdateOrder($request->orderId, $request->orderItem, $request->userId));
         return response()->json(json_decode($orderRow->order_list_string));
     }
 
@@ -141,16 +142,16 @@ class OrderController extends Controller
             }
         }
         /**end validation */
-        
+
         $order = TempOrder::where('id', $request->order_id)->first();
-        if($order===null)
-        {
+        if ($order === null) {
             $order = new TempOrder;
 
             $order["id"] = $request->order_id;
             $order["table_number"] = $request->table_id;
-            $order["order_list_string"] = "[]";
-            $order->save(); 
+
+            $order["order_list_string"] = json_encode(['pendingList' => [], 'historyList' => []]);
+            $order->save();
         }
 
         return response()->json(json_decode($order->order_list_string));
@@ -412,25 +413,25 @@ class OrderController extends Controller
         $this->createOrderLinkSubHelper($new_order, $request->v);
 
         //update temp_order_item
-        $this->changeTempOrderItemsStatus($new_order->id, $request->orderList);
+        $returnHistoryListString = $this->changeTempOrderItemsStatus($request->order_id, $request->orderList);
 
-        broadcast(new UpdateOrder($request->orderId));
-        return response()->json(["new_order" => $new_order], 200);
+        broadcast(new ConfirmOrder($request->orderId));
+        return response()->json(["historyList" => json_decode($returnHistoryListString)], 200);
 
     }
 
     public function changeTempOrderItemsStatus($id, $orderList)
     {
-        /** need add oc_order_id for all current submit order_items, for further refference */
-        //1. loop through all rows in the orderList if oc_order_id is null, then put $id in
-        foreach ($orderList as $item) {
 
-            $target_temp_order_item = TempOrderItem::where('id', $item["item"]["order_item_id"])->first();
-            if ($target_temp_order_item->oc_order_id === null) {
-                $target_temp_order_item->oc_order_id = $id;
-            }
-            $target_temp_order_item->save();
-        }
+        $order = TempOrder::where('id', $id)->first();
+        $orderArr = json_decode($order->order_list_string);
+        $orderHistoryListArr = $orderArr->historyList;
+        $orderArr->historyList = array_merge($orderHistoryListArr, $orderList);
+        $orderArr->pendingList = [];
+        $order->order_list_string = json_encode($orderArr);
+        $order->save();
+
+        return json_encode($orderArr->historyList);
     }
 
     public function createOrderLinkSubHelper($new_order, $v)
@@ -603,8 +604,10 @@ class OrderController extends Controller
                 /**picked choices */
                 foreach ($order_product["item"]["choices"] as $choice) {
                     $new_order_ext = new OrderExt;
+                    $decodeChoice = json_decode($choice["pickedChoice"]);
+                    // $new_order_ext->product_ext_id = $choice["product_ext_id"];
+                    $new_order_ext->product_ext_id = $decodeChoice->product_ext_id;
 
-                    $new_order_ext->product_ext_id = $choice["product_ext_id"];
                     $new_order_ext->order_product_id = $new_order_product->id;
                     $new_order_ext->product_id = $order_product["item"]["product_id"];
 
@@ -640,12 +643,17 @@ class OrderController extends Controller
 // if $order_list_string is null or empty add straight away
         if ($orderRow === null) {
             $orderRow = new TempOrder;
-            $newOrderItem = ['item'=>$new_item,'quantity'=>1];
-            $orderRow->order_list_string = '['.json_encode($newOrderItem).']';
+            $newOrderItem = ['item' => $new_item, 'quantity' => 1];
+            $tempArr = array('pendingList' => [$newOrderItem], 'historyList' => []);
+
+            $orderRow->order_list_string = json_encode($tempArr);
+            $orderRow->id = $request->orderId;
+            $orderRow->table_number = $request->tableId;
         } else {
             $flag = false;
             $order_list_string = $orderRow->order_list_string;
-            $orderObject = json_decode($order_list_string);
+            $orderArr = json_decode($order_list_string);
+            $orderObject = $orderArr->pendingList;
             foreach ($orderObject as $orderItem) {
                 // return response()->json($orderItem);
                 if ($orderItem->item->product_id === $new_item["product_id"]) {
@@ -672,15 +680,22 @@ class OrderController extends Controller
                 if ($flag) {
                     if ($request->action === 'add') {
                         $orderItem->quantity++;
+                    } else if ($request->action === 'sub' && $orderItem->quantity > 1) {
+                        $orderItem->quantity--;
+                    } else if ($request->action === 'sub' && $orderItem->quantity <= 1) {
+                        $index = array_search($orderItem, $orderObject);
+                        array_splice($orderObject, $index, 1);
                     }
-                    $orderRow->order_list_string = json_encode($orderObject);
+                    $orderArr->pendingList = $orderObject;
+                    $orderRow->order_list_string = json_encode($orderArr);
 
                     break;
                 }
             }
             if (!$flag && $request->action === 'add') {
                 array_push($orderObject, array('item' => $new_item, 'quantity' => 1));
-                $orderRow->order_list_string = json_encode($orderObject);
+                $orderArr->pendingList = $orderObject;
+                $orderRow->order_list_string = json_encode($orderArr);
             }
         }
 

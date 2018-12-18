@@ -32,23 +32,36 @@ export default class ProductCard extends Component {
 
     this.setState({ btnSub: buttonImg });
     if (this.props.mode !== "menu") {
-      this.getProductQtyInOrderList(this.props.shoppingCartList);
+      this.getProductQtyInOrderList(
+        this.props.shoppingCartList,
+        this.props.historyCartList
+      );
     }
   }
 
   componentWillReceiveProps(newProps) {
     if (this.props.mode !== "menu") {
-      this.getProductQtyInOrderList(newProps.shoppingCartList);
+      this.getProductQtyInOrderList(
+        newProps.shoppingCartList,
+        newProps.historyCartList
+      );
     }
   }
 
-  getProductQtyInOrderList(arr) {
+  getProductQtyInOrderList(arr, historyList) {
     let Qty = 0;
     arr.map(orderItem => {
       if (orderItem.item.product_id === this.props.product.product_id) {
         Qty += orderItem.quantity;
       }
     });
+    if (historyList) {
+      historyList.map(orderItem => {
+        if (orderItem.item.product_id === this.props.product.product_id) {
+          Qty += orderItem.quantity;
+        }
+      });
+    }
     this.setState({ quantity: Qty });
   }
 

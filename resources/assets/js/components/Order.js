@@ -23,13 +23,32 @@ export default class Order extends Component {
   componentDidMount() {
     //console.log(this.props.match.params);
 
-    Axios.get(`/table/public/api/products/1`).then(res => {
-      this.setState({ productGroupList: res.data.products });
+    Axios.get(
+      `/table/public/api/products/${localStorage.getItem(
+        "aupos_language_code"
+      )}`
+    ).then(res => {
+      this.setState({
+        productGroupList: res.data.products
+      });
     });
 
-    Axios.get(`/table/public/api/categories/1`).then(res => {
-      this.setState({ categoryList: res.data.categories });
+    Axios.get(
+      `/table/public/api/categories/${localStorage.getItem(
+        "aupos_language_code"
+      )}`
+    ).then(res => {
+      this.setState({
+        categoryList: res.data.categories
+      });
     });
+
+    this.props.setOriginPath(
+      `${this.props.location.pathname}${this.props.location.search}`
+    );
+
+    const pathQuery = queryString.parse(this.props.location.search);
+    this.props.setV(pathQuery.v);
 
     for (let index = 0; index < this.state.categoryList.length; index++) {
       this.state.navBarItems[index] = {
@@ -38,7 +57,9 @@ export default class Order extends Component {
       };
     }
 
-    this.setState({ shoppingCartList: this.props.shoppingCartList });
+    this.setState({
+      shoppingCartList: this.props.shoppingCartList
+    });
   }
 
   componentWillReceiveProps(newProps) {
@@ -51,6 +72,7 @@ export default class Order extends Component {
 
   render() {
     const parsed = queryString.parse(this.props.location.search);
+
     return (
       <div className="order">
         <Head
@@ -61,7 +83,14 @@ export default class Order extends Component {
                   this.props.match.params.table
                 }`
           }
-          btnLabel={this.props.app_conf.lang_switch_cn}
+          btnLabel={
+            localStorage.getItem("aupos_language_code") === "1"
+              ? this.props.app_conf.lang_switch_en
+              : this.props.app_conf.lang_switch_cn
+          }
+          originPath={`${this.props.location.pathname}${
+            this.props.location.search
+          }`}
         />
         <div className="main">
           <div className="category-list">
@@ -104,6 +133,7 @@ export default class Order extends Component {
                         updateShoppingCartList={
                           this.props.updateShoppingCartList
                         }
+                        historyCartList={this.props.historyCartList}
                         key={`product${product.product_id}`}
                         product={product}
                         app_conf={this.props.app_conf}
@@ -132,6 +162,8 @@ export default class Order extends Component {
           v={parsed.v}
           redirectToMenu={this.redirectToMenu}
           userId={this.props.userId}
+          updateHistoryCartList={this.props.updateHistoryCartList}
+          historyCartList={this.props.historyCartList}
         />
       </div>
     );

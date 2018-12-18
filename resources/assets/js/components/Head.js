@@ -7,7 +7,13 @@ export default class Head extends Component {
   }
 
   changeLanguage() {
-    alert("change language");
+    const lang = localStorage.getItem("aupos_language_code");
+    if (lang === "1") {
+      localStorage.setItem("aupos_language_code", 2);
+    } else {
+      localStorage.setItem("aupos_language_code", 1);
+    }
+    window.location.reload();
   }
 
   render() {

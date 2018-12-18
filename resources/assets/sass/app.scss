@@ -596,6 +596,54 @@ body {
     flex: 1;
     text-align: center;
   }
+  .order-item-card__mode-3-pannel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 107px;
+    .mode-3-pannel__left,
+    .mode-3-pannel__right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      .title {
+        height: 20px;
+        line-height: 17px;
+        font-size: 12px;
+        color: #444;
+        font-weight: 300;
+        background-color: white;
+        width: 100%;
+        text-align: center;
+        border: 2px solid #f1f1f1;
+      }
+      .number {
+        background-color: $yellow;
+        width: 100%;
+        height: 19px;
+        line-height: 19px;
+        font-size: 16px;
+        color: #fff;
+        font-weight: 600;
+        text-align: center;
+      }
+    }
+    .mode-3-pannel__left {
+      .title {
+        border-bottom: none;
+      }
+      .number {
+        border-right: 1px solid #fff;
+      }
+    }
+    .mode-3-pannel__right {
+      .title {
+        border-bottom: none;
+        border-left: none;
+      }
+    }
+  }
 }
 
 .confirm {
@@ -735,6 +783,7 @@ body {
       align-items: center;
       height: 10vh;
       justify-content: space-between;
+      border-right: 2px solid white;
       .text {
         height: 22px;
         line-height: 22px;
@@ -789,5 +838,50 @@ body {
       font-weight: 600;
       font-size: 18px;
     }
+  }
+}
+.complete {
+  .complete__icon-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 40vh;
+    .complete__icon-text {
+      margin-top: 25px;
+      color: #444;
+      font-weight: 500;
+      font-size: 18px;
+      height: 22px;
+    }
+  }
+  .complete__order-list-title {
+    height: 26px;
+    line-height: 26px;
+    padding: 0px 15px;
+    position: relative;
+    .complete__order-list-title-text {
+      color: #444;
+      font-weight: 500;
+      height: 22px;
+      line-height: 22px;
+      background-color: white;
+      width: 90px;
+      font-size: 18px;
+      z-index: 2;
+    }
+    .complete__order-list-divider {
+      height: 11px;
+      position: absolute;
+      top: 0;
+      width: 90%;
+      border-bottom: 1px solid #f1f1f1;
+      z-index: -1;
+    }
+  }
+  .complete__order-list {
+    padding: 10px 20px;
+    max-height: 50vh;
+    overflow: scroll;
   }
 }

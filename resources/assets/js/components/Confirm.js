@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { QRCode } from "react-qr-svg";
 import { Link } from "react-router-dom";
+import Axios from "axios";
 
 import OrderItemCard from "./OrderItemCard";
 
@@ -18,12 +19,23 @@ export default class Confirm extends Component {
     this.createQrCode = this.createQrCode.bind(this);
     this.getOrderItemQuantityTotal = this.getOrderItemQuantityTotal.bind(this);
     this.getTotalPrice = this.getTotalPrice.bind(this);
+    this.confirmOrder = this.confirmOrder.bind(this);
   }
 
   componentDidMount() {
-    this.setState({
-      shoppingCartList: JSON.parse(localStorage.getItem("preorderList"))
-    });
+    if (this.props.mode === "preorder") {
+      this.setState({
+        shoppingCartList: JSON.parse(localStorage.getItem("preorderList"))
+      });
+    } else if (this.props.mode === "table") {
+      this.setState({ shoppingCartList: this.props.shoppingCartList });
+    }
+  }
+
+  componentWillReceiveProps(newPorps) {
+    if (newPorps.mode === "table") {
+      this.setState({ shoppingCartList: newProps.shoppingCartList });
+    }
   }
 
   getOrderItemQuantityTotal() {
@@ -79,7 +91,32 @@ export default class Confirm extends Component {
     return sum.toFixed(2);
   }
 
+  confirmOrder() {
+    Axios.post(`/table/public/api/confirm`, {
+      orderList: this.state.shoppingCartList,
+      order_id: this.props.match.params.orderId,
+      store_id: "4",
+      store_name: "some store",
+      store_url: "http://kidsnparty.com.au/table/public",
+      total: this.getTotalPrice(),
+      paymentMethod: "Dive in",
+      v: this.props.v
+    })
+      .then(res => {
+        // this.props.updateHistoryCartList(res.data.historyList);
+        this.props.history.push(
+          `/table/public/complete/${this.props.match.params.tableId}/${
+            this.props.match.params.orderId
+          }`
+        );
+      })
+      .catch(err => {
+        alert(err.reponse.data);
+      });
+  }
+
   render() {
+    console.log("confirm state: ", this.state);
     const qr_section = (
       <div className="qrcode-section">
         <div className="qrcode-container">
@@ -134,28 +171,30 @@ export default class Confirm extends Component {
           })}
         </div>
 
+        <div>
+          <div className="confirm__order-list__total">
+            <span className="confirm__order-list__total-title">
+              {this.props.app_conf.confirm_total}
+            </span>
+            <span className="confirm__order-list__total-number">
+              ${this.getTotalPrice()}
+            </span>
+          </div>
+          <div className="confirm__back-button-container">
+            <Link
+              to={
+                this.props.mode === "preorder"
+                  ? `/table/public/preorder`
+                  : this.props.originPath
+              }
+              className="confirm__back-button"
+            >
+              {this.props.app_conf.continue_order}
+            </Link>
+          </div>
+        </div>
         {this.props.match.params.mode === "table" ? qr_section : null}
 
-        {this.props.match.params.mode === "preorder" ? (
-          <div>
-            <div className="confirm__order-list__total">
-              <span className="confirm__order-list__total-title">
-                {this.props.app_conf.confirm_total}
-              </span>
-              <span className="confirm__order-list__total-number">
-                ${this.getTotalPrice()}
-              </span>
-            </div>
-            <div className="confirm__back-button-container">
-              <Link
-                to={`/table/public/preorder`}
-                className="confirm__back-button"
-              >
-                {this.props.app_conf.continue_order}
-              </Link>
-            </div>
-          </div>
-        ) : null}
         {this.props.match.params.mode === "table" ? (
           <div className="confirm__footer">
             <span className="confirm__footer__total">
@@ -172,7 +211,10 @@ export default class Confirm extends Component {
               <span className="text">{this.props.app_conf.order}</span>
               <span className="number">{this.props.match.params.orderId}</span>
             </span>
-            <span className="confirm__footer__button">
+            <span
+              onClick={this.confirmOrder}
+              className="confirm__footer__button"
+            >
               <span>{this.props.app_conf.confirm_order}</span>
             </span>
           </div>

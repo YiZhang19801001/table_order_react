@@ -20,6 +20,7 @@ import Axios from "axios";
 import Order from "./components/Order";
 import Confirm from "./components/Confirm";
 import Menu from "./components/Menu";
+import Complete from "./components/Complete";
 
 export default class App extends Component {
   constructor(props) {
@@ -27,10 +28,13 @@ export default class App extends Component {
 
     this.state = {
       shoppingCartList: [],
+      historyCartList: [],
       app_conf: {},
       tableId: "",
       orderId: "",
-      userId: ""
+      userId: "",
+      originPath: "",
+      v: ""
     };
 
     this.updateShoppingCartList = this.updateShoppingCartList.bind(this);
@@ -40,17 +44,32 @@ export default class App extends Component {
       this
     );
     this.updateOrderList = this.updateOrderList.bind(this);
+    this.setOriginPath = this.setOriginPath.bind(this);
+    this.setV = this.setV.bind(this);
+    this.updateHistoryCartList = this.updateHistoryCartList.bind(this);
   }
 
   componentDidMount() {
-    let lang = 0;
+    let lang = 1;
     if (localStorage.getItem("aupos_language_code")) {
       lang = localStorage.getItem("aupos_language_code");
+    } else {
+      localStorage.setItem("aupos_laguage_code", 1);
     }
 
     Axios.get(`/table/public/api/init/${lang}`).then(res => {
-      this.setState({ app_conf: res.data.app_conf, userId: res.data.userId });
+      this.setState({
+        app_conf: res.data.app_conf,
+        userId: res.data.userId
+      });
     });
+  }
+
+  updateHistoryCartList(list) {
+    this.setState({ historyCartList: list });
+  }
+  setOriginPath(path) {
+    this.setState({ originPath: path });
   }
 
   /**
@@ -70,9 +89,9 @@ export default class App extends Component {
    * @param {product} item
    */
   updateShoppingCartList(isCallApi, item, mode, action, orderId, tableId) {
-    console.log("update order list in preorder mode", item);
-    console.log("mode", mode);
-    console.log("action", action);
+    // console.log("update order list in preorder mode", item);
+    // console.log("mode", mode);
+    // console.log("action", action);
     let flag = false;
     for (let i = 0; i < this.state.shoppingCartList.length; i++) {
       if (this.state.shoppingCartList[i].item.product_id === item.product_id) {
@@ -152,7 +171,9 @@ export default class App extends Component {
       );
     }
   }
-
+  setV(v) {
+    this.setState({ v: v });
+  }
   /**
    * incease quantity of an order item in the shopping cart
    *
@@ -191,9 +212,10 @@ export default class App extends Component {
   ) {
     const arrRes = this.state.shoppingCartList;
     this.setState({ shoppingCartList: arrRes });
-    console.log("refresh is call api: ", isCallApi);
-    console.log("refresh mode: ", mode);
-    console.log("refresh item: ", item);
+    // console.log("refresh is call api: ", isCallApi);
+    // console.log("refresh mode: ", mode);
+    // console.log("refresh item: ", item);
+    // console.log("refresh order id: ", orderId);
     if (mode === "preorder") {
       localStorage.setItem(
         "preorderList",
@@ -226,6 +248,7 @@ export default class App extends Component {
                 increaseShoppingCartItem={this.increaseShoppingCartItem}
                 decreaseShoppingCartItem={this.decreaseShoppingCartItem}
                 updateOrderList={this.updateOrderList}
+                lang={this.state.lang}
                 mode={"preorder"}
                 {...props}
               />
@@ -246,6 +269,11 @@ export default class App extends Component {
                 mode={"table"}
                 updateOrderList={this.updateOrderList}
                 userId={this.state.userId}
+                setOriginPath={this.setOriginPath}
+                lang={this.state.lang}
+                setV={this.setV}
+                updateHistoryCartList={this.updateHistoryCartList}
+                historyCartList={this.state.historyCartList}
                 {...props}
               />
             )}
@@ -257,6 +285,7 @@ export default class App extends Component {
               <Confirm
                 shoppingCartList={this.state.shoppingCartList}
                 app_conf={this.state.app_conf}
+                mode={"preorder"}
                 {...props}
               />
             )}
@@ -268,6 +297,24 @@ export default class App extends Component {
               <Confirm
                 shoppingCartList={this.state.shoppingCartList}
                 app_conf={this.state.app_conf}
+                mode={"table"}
+                updateHistoryCartList={this.updateHistoryCartList}
+                originPath={this.state.originPath}
+                v={this.state.v}
+                {...props}
+              />
+            )}
+          />
+          <Route
+            exact
+            path="/table/public/complete/:tableId/:orderId"
+            render={props => (
+              <Complete
+                shoppingCartList={this.state.shoppingCartList}
+                app_conf={this.state.app_conf}
+                mode={"table"}
+                originPath={this.state.originPath}
+                historyCartList={this.state.historyCartList}
                 {...props}
               />
             )}

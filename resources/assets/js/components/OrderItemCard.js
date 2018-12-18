@@ -31,7 +31,7 @@ export default class OrderItemCard extends Component {
     this.props.updateShoppingCartList(
       true,
       this.state.orderItem.item,
-      this.props.mode,
+      this.props.appMode,
       "add",
       this.props.orderId,
       this.props.tableNumber
@@ -42,7 +42,7 @@ export default class OrderItemCard extends Component {
     this.props.updateShoppingCartList(
       true,
       this.state.orderItem.item,
-      this.props.mode,
+      this.props.appMode,
       "sub",
       this.props.orderId,
       this.props.tableNumber
@@ -76,14 +76,16 @@ export default class OrderItemCard extends Component {
       );
     return (
       <div className="order-item-card">
-        <div className="order-item-card__img-container">
-          <img
-            src={`/table/public/images/items/${
-              this.state.orderItem.item.image
-            }`}
-            alt=""
-          />
-        </div>
+        {this.props.mode !== 3 ? (
+          <div className="order-item-card__img-container">
+            <img
+              src={`/table/public/images/items/${
+                this.state.orderItem.item.image
+              }`}
+              alt=""
+            />
+          </div>
+        ) : null}
         <div className="order-item-card__info-container">
           <span className="order-item-card__item-name">
             {this.state.orderItem.item.name}
@@ -118,14 +120,30 @@ export default class OrderItemCard extends Component {
             );
           })}
         </div>
-        <div className="order-item-card__quantity-control-container">
-          {Control_Pannel}
-        </div>
-        <div className="order-item-card__total-price-container">
-          <div className="order-item-card__total-price">
-            ${this.getTotalPrice()}
+        {this.props.mode !== 3 ? (
+          <div className="order-item-card__quantity-control-container">
+            {Control_Pannel}
           </div>
-        </div>
+        ) : null}
+        {this.props.mode !== 3 ? (
+          <div className="order-item-card__total-price-container">
+            <div className="order-item-card__total-price">
+              ${this.getTotalPrice()}
+            </div>
+          </div>
+        ) : null}
+        {this.props.mode === 3 ? (
+          <div className="order-item-card__mode-3-pannel">
+            <div className="mode-3-pannel__left">
+              <div className="title">{this.props.app_conf.order_label}</div>
+              <div className="number">{this.state.orderItem.quantity}</div>
+            </div>
+            <div className="mode-3-pannel__right">
+              <div className="title">{this.props.app_conf.total}</div>
+              <div className="number">{this.getTotalPrice()}</div>
+            </div>
+          </div>
+        ) : null}
       </div>
     );
   }
