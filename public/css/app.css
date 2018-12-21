@@ -486,9 +486,7 @@ body {
 }
 
 .choice-group .choice-group__content .choice-group__content-wrapper {
-  -webkit-box-flex: 1;
-      -ms-flex: 1;
-          flex: 1;
+  width: 33%;
   margin-bottom: 8px;
   /* When the checkbox is checked, add a blue background */
 }

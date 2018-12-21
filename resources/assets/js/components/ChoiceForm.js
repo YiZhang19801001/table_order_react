@@ -32,6 +32,7 @@ export default class ChoiceForm extends Component {
    * @param {string} tableId- table id
    */
   updateShoppingCartList() {
+    
     this.props.updateShoppingCartList(
       true,
       this.state.product,
@@ -50,6 +51,8 @@ export default class ChoiceForm extends Component {
    */
   updateOrderItemChoice(pickedChoice, index) {
     this.state.product.choices[index].pickedChoice = pickedChoice;
+    const newStateProduct = this.state.product;
+    this.setState({product:newStateProduct});
   }
 
   render() {

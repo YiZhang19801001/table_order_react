@@ -12,7 +12,7 @@ export default class ChoiceGroup extends Component {
   }
 
   render() {
-    const imgSrc = `url("/table/public/images/items/${this.props.imgSrc}")`;
+    // const imgSrc = `url("/table/public/images/items/${this.props.imgSrc}")`;
     return (
       <div className="choice-group">
         <div className="choice-group__title">{this.props.choiceGroup.type}</div>
@@ -36,7 +36,7 @@ export default class ChoiceGroup extends Component {
                   <span className="checkmark-wrap">
                     <span
                       className="checkmark"
-                      style={{ backgroundImage: imgSrc }}
+                      style={{ backgroundImage: `url("/table/public/images/items/${choice.image}")` }}
                     />
                     <div className="choice-group__icon-cover" />
                   </span>

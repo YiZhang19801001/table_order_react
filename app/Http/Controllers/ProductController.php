@@ -140,12 +140,22 @@ class ProductController extends Controller
                 if ($lang == 1) {
                     $choices_item["name"] = $choice_to_type["name"];
 
-                } else {
+                } else if($lang == 2){
                     $choices_item["name"] = $choice_to_type["name_2"];
 
                 }
                 $choices_item["price"] = $choice_to_type["price"];
                 $choices_item["barcode"] = $choice_to_type["barcode"];
+                $image_path = '/table/public/images/items/' . $choice->image;
+                $choices_item["image"] = "";
+                if ($choice->image === null || !file_exists($_SERVER['DOCUMENT_ROOT'] . $image_path)) {
+                    $choices_item["image"] = 'default_taste.png';
+                    // $new_product["image"] = '24.jpg';
+
+                } else {
+
+                    $choices_item["image"] = $choice->image;
+                }
                 array_push($choices, $choices_item);
             }
 
@@ -236,7 +246,7 @@ class ProductController extends Controller
                      *       "option_value_sort_order": 0,
                      *       "price": "2.00"
                      *   }
-                    ] */
+                     *]*/
                 }
             }
 

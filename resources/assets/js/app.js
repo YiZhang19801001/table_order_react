@@ -90,10 +90,13 @@ export default class App extends Component {
    */
   updateShoppingCartList(isCallApi, item, mode, action, orderId, tableId) {
     // console.log("update order list in preorder mode", item);
+   
+    
     // console.log("mode", mode);
     // console.log("action", action);
     let flag = false;
-    for (let i = 0; i < this.state.shoppingCartList.length; i++) {
+    for (let i = 0; i < this.state.shoppingCartList.length; i++) {   
+
       if (this.state.shoppingCartList[i].item.product_id === item.product_id) {
         flag = true;
         if (this.state.shoppingCartList[i].item.options.length > 0) {
@@ -111,6 +114,7 @@ export default class App extends Component {
           }
         }
 
+        
         if (
           flag === false ||
           this.state.shoppingCartList[i].item.choices.length < 1
@@ -231,6 +235,8 @@ export default class App extends Component {
         tableId: tableId
       });
     }
+
+    window.location.reload();
   }
 
   render() {
