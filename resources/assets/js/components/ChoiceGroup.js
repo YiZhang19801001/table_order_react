@@ -36,7 +36,11 @@ export default class ChoiceGroup extends Component {
                   <span className="checkmark-wrap">
                     <span
                       className="checkmark"
-                      style={{ backgroundImage: `url("/table/public/images/items/${choice.image}")` }}
+                      style={{
+                        backgroundImage: `url("/table/public/images/items/${
+                          choice.image
+                        }")`
+                      }}
                     />
                     <div className="choice-group__icon-cover" />
                   </span>

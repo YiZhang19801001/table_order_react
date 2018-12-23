@@ -43,7 +43,9 @@ export default class ShoppingCart extends Component {
         this.setState({
           shoppingCartList: JSON.parse(localStorage.getItem("preorderList"))
         });
-        console.log('updateOrderList has been called from ShoppingCart Component');
+        console.log(
+          "updateOrderList has been called from ShoppingCart Component"
+        );
         this.props.updateOrderList(
           JSON.parse(localStorage.getItem("preorderList"))
         );
@@ -88,7 +90,7 @@ export default class ShoppingCart extends Component {
         // console.log("e.orderId: ", e.orderId);
         // console.log("this.props.orderId: ", this.props.orderId);
         console.log("confirm order event listened");
-        
+
         if (e.orderId == this.props.orderId) {
           Axios.post(`/table/public/api/initcart`, {
             order_id: this.props.orderId,

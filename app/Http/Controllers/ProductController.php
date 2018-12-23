@@ -137,10 +137,10 @@ class ProductController extends Controller
 
             foreach ($choices_to_type as $choice_to_type) {
                 $choices_item["product_ext_id"] = $choice_to_type["product_ext_id"];
-                if ($lang == 1) {
+                if ($lang == 1 || $lang == "null") {
                     $choices_item["name"] = $choice_to_type["name"];
 
-                } else if($lang == 2){
+                } else if ($lang == 2) {
                     $choices_item["name"] = $choice_to_type["name_2"];
 
                 }

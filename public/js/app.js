@@ -14366,6 +14366,8 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -14480,32 +14482,80 @@ var App = function (_Component) {
     key: "updateShoppingCartList",
     value: function updateShoppingCartList(isCallApi, item, mode, action, orderId, tableId) {
       // console.log("update order list in preorder mode", item);
-
-
+      // console.log("state.shoppingcartlist: ", this.state.shoppingCartList);
       // console.log("mode", mode);
       // console.log("action", action);
-      var flag = false;
-      for (var i = 0; i < this.state.shoppingCartList.length; i++) {
+      // console.log("orderItem", item);
+      var resultArr = [];
+      if (action === "add") {
+        var flag = false;
+        this.setState({
+          shoppingCartList: this.state.shoppingCartList.map(function (orderItem) {
+            if (_.isEqual(orderItem.item, item)) {
+              flag = true;
+              console.log("work");
 
+              return _extends({}, orderItem, { quantity: orderItem.quantity + 1 });
+            } else {
+              return orderItem;
+            }
+          })
+        });
+        if (!flag) {
+          this.setState({
+            shoppingCartList: [].concat(_toConsumableArray(this.state.shoppingCartList), [{ item: item, quantity: 1 }])
+          });
+        }
+        resultArr = this.state.shoppingCartList;
+      } else if (action === "sub") {
+        var arr = this.state.shoppingCartList.map(function (orderItem) {
+          if (_.isEqual(orderItem.item, item)) {
+            console.log("worked");
+            return _extends({}, orderItem, { quantity: orderItem.quantity - 1 });
+          } else {
+            return orderItem;
+          }
+        });
+
+        resultArr = arr.filter(function (ele) {
+          return ele.quantity > 0;
+        });
+
+        this.setState({ shoppingCartList: resultArr });
+      }
+
+      this.refreshStateShoppingCartList(isCallApi, mode, action, item, orderId, tableId, resultArr);
+      /*
+      for (let i = 0; i < this.state.shoppingCartList.length; i++) {
         if (this.state.shoppingCartList[i].item.product_id === item.product_id) {
           flag = true;
           if (this.state.shoppingCartList[i].item.options.length > 0) {
-            for (var a = 0; a < this.state.shoppingCartList[i].item.options.length; a++) {
-              var option = this.state.shoppingCartList[i].item.options[a];
-              var new_option = item.options[a];
+            for (
+              let a = 0;
+              a < this.state.shoppingCartList[i].item.options.length;
+              a++
+            ) {
+              const option = this.state.shoppingCartList[i].item.options[a];
+              const new_option = item.options[a];
               if (option.pickedOption !== new_option) {
                 flag = false;
                 break;
               }
             }
           }
-
-          if (flag === false || this.state.shoppingCartList[i].item.choices.length < 1) {
+            if (
+            flag === false ||
+            this.state.shoppingCartList[i].item.choices.length < 1
+          ) {
             break;
           } else {
-            for (var b = 0; b < this.state.shoppingCartList[i].item.choices.length; b++) {
-              var choice = this.state.shoppingCartList[i].item.choices[b];
-              var new_choice = item.choices[b];
+            for (
+              let b = 0;
+              b < this.state.shoppingCartList[i].item.choices.length;
+              b++
+            ) {
+              const choice = this.state.shoppingCartList[i].item.choices[b];
+              const new_choice = item.choices[b];
               if (choice.pickedChoice !== new_choice.pickedChoice) {
                 flag = false;
                 break;
@@ -14523,10 +14573,15 @@ var App = function (_Component) {
               this.state.shoppingCartList.splice(i, 1);
             }
           }
-
-          this.refreshStateShoppingCartList(isCallApi, mode, action, item, orderId, tableId);
-
-          break;
+            this.refreshStateShoppingCartList(
+            isCallApi,
+            mode,
+            action,
+            item,
+            orderId,
+            tableId
+          );
+            break;
         }
       }
       // if product_id not exist add new
@@ -14535,9 +14590,8 @@ var App = function (_Component) {
           item: item,
           quantity: 1
         });
-
-        this.refreshStateShoppingCartList(isCallApi, mode, action, item, orderId, tableId);
-      }
+       }
+      */
     }
   }, {
     key: "setV",
@@ -14581,15 +14635,14 @@ var App = function (_Component) {
 
   }, {
     key: "refreshStateShoppingCartList",
-    value: function refreshStateShoppingCartList(isCallApi, mode, action, item, orderId, tableId) {
-      var arrRes = this.state.shoppingCartList;
-      this.setState({ shoppingCartList: arrRes });
+    value: function refreshStateShoppingCartList(isCallApi, mode, action, item, orderId, tableId, resultArr) {
       // console.log("refresh is call api: ", isCallApi);
       // console.log("refresh mode: ", mode);
       // console.log("refresh item: ", item);
       // console.log("refresh order id: ", orderId);
       if (mode === "preorder") {
-        localStorage.setItem("preorderList", JSON.stringify(this.state.shoppingCartList));
+        // console.log(this.state.shoppingCartList);
+        localStorage.setItem("preorderList", JSON.stringify(resultArr));
       } else if (mode === "table" && isCallApi === true) {
         //console.log(this.state.userId);
         __WEBPACK_IMPORTED_MODULE_3_axios___default.a.post("/table/public/api/updateorderlist", {
@@ -14600,8 +14653,6 @@ var App = function (_Component) {
           tableId: tableId
         });
       }
-
-      window.location.reload();
     }
   }, {
     key: "render",
@@ -61133,7 +61184,7 @@ var warning = __webpack_require__(1);
 
 var ReactComponentTreeHook;
 
-if (typeof process !== 'undefined' && Object({"MIX_APP_LAN":"1","MIX_PUSHER_APP_CLUSTER":"ap1","MIX_PUSHER_APP_KEY":"da53128c54079c5c7c40","MIX_SHOW_OPTIONS":"false","NODE_ENV":"development"}) && "development" === 'test') {
+if (typeof process !== 'undefined' && Object({"MIX_APP_LAN":"","MIX_PUSHER_APP_CLUSTER":"ap1","MIX_PUSHER_APP_KEY":"da53128c54079c5c7c40","MIX_SHOW_OPTIONS":"false","NODE_ENV":"development"}) && "development" === 'test') {
   // Temporary hack.
   // Inline requires don't work well with Jest:
   // https://github.com/facebook/react/issues/7240
@@ -63048,7 +63099,7 @@ var warning = __webpack_require__(1);
 
 var ReactComponentTreeHook;
 
-if (typeof process !== 'undefined' && Object({"MIX_APP_LAN":"1","MIX_PUSHER_APP_CLUSTER":"ap1","MIX_PUSHER_APP_KEY":"da53128c54079c5c7c40","MIX_SHOW_OPTIONS":"false","NODE_ENV":"development"}) && "development" === 'test') {
+if (typeof process !== 'undefined' && Object({"MIX_APP_LAN":"","MIX_PUSHER_APP_CLUSTER":"ap1","MIX_PUSHER_APP_KEY":"da53128c54079c5c7c40","MIX_SHOW_OPTIONS":"false","NODE_ENV":"development"}) && "development" === 'test') {
   // Temporary hack.
   // Inline requires don't work well with Jest:
   // https://github.com/facebook/react/issues/7240
@@ -64108,7 +64159,7 @@ var warning = __webpack_require__(1);
 
 var ReactComponentTreeHook;
 
-if (typeof process !== 'undefined' && Object({"MIX_APP_LAN":"1","MIX_PUSHER_APP_CLUSTER":"ap1","MIX_PUSHER_APP_KEY":"da53128c54079c5c7c40","MIX_SHOW_OPTIONS":"false","NODE_ENV":"development"}) && "development" === 'test') {
+if (typeof process !== 'undefined' && Object({"MIX_APP_LAN":"","MIX_PUSHER_APP_CLUSTER":"ap1","MIX_PUSHER_APP_KEY":"da53128c54079c5c7c40","MIX_SHOW_OPTIONS":"false","NODE_ENV":"development"}) && "development" === 'test') {
   // Temporary hack.
   // Inline requires don't work well with Jest:
   // https://github.com/facebook/react/issues/7240
@@ -64315,7 +64366,7 @@ var warning = __webpack_require__(1);
 
 var ReactComponentTreeHook;
 
-if (typeof process !== 'undefined' && Object({"MIX_APP_LAN":"1","MIX_PUSHER_APP_CLUSTER":"ap1","MIX_PUSHER_APP_KEY":"da53128c54079c5c7c40","MIX_SHOW_OPTIONS":"false","NODE_ENV":"development"}) && "development" === 'test') {
+if (typeof process !== 'undefined' && Object({"MIX_APP_LAN":"","MIX_PUSHER_APP_CLUSTER":"ap1","MIX_PUSHER_APP_KEY":"da53128c54079c5c7c40","MIX_SHOW_OPTIONS":"false","NODE_ENV":"development"}) && "development" === 'test') {
   // Temporary hack.
   // Inline requires don't work well with Jest:
   // https://github.com/facebook/react/issues/7240
@@ -70881,7 +70932,11 @@ module.exports = function (encodedURI) {
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(3);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__ChoiceGroup__ = __webpack_require__(290);
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -70901,11 +70956,11 @@ var ChoiceForm = function (_Component) {
 
     var _this = _possibleConstructorReturn(this, (ChoiceForm.__proto__ || Object.getPrototypeOf(ChoiceForm)).call(this, props));
 
-    _this.state = {
+    _this.state = _defineProperty({
       pickedChoice: "",
       pickedOption: "",
-      product: _this.props.product
-    };
+      product: { choices: [] }
+    }, "pickedChoice", "");
 
     _this.updateShoppingCartList = _this.updateShoppingCartList.bind(_this);
     _this.updateOrderItemChoice = _this.updateOrderItemChoice.bind(_this);
@@ -70933,8 +70988,14 @@ var ChoiceForm = function (_Component) {
   }, {
     key: "updateShoppingCartList",
     value: function updateShoppingCartList() {
+      var _this2 = this;
 
-      this.props.updateShoppingCartList(true, this.state.product, this.props.mode, "add", this.props.orderId, this.props.tableNumber);
+      var orderItem = _extends({}, this.state.product, {
+        choices: this.state.product.choices.map(function (choice) {
+          return _extends({}, choice, { pickedChoice: _this2.state.pickedChoice });
+        })
+      });
+      this.props.updateShoppingCartList(true, orderItem, this.props.mode, "add", this.props.orderId, this.props.tableNumber);
       this.props.closeChoiceForm();
     }
 
@@ -70947,14 +71008,15 @@ var ChoiceForm = function (_Component) {
   }, {
     key: "updateOrderItemChoice",
     value: function updateOrderItemChoice(pickedChoice, index) {
-      this.state.product.choices[index].pickedChoice = pickedChoice;
-      var newStateProduct = this.state.product;
-      this.setState({ product: newStateProduct });
+      //this.state.product.choices[index].pickedChoice = pickedChoice;
+      this.setState({ pickedChoice: pickedChoice });
+      // const newStateProduct = this.state.product;
+      // this.setState({ product: newStateProduct });
     }
   }, {
     key: "render",
     value: function render() {
-      var _this2 = this;
+      var _this3 = this;
 
       var imgSrc = "/table/public/images/items/" + this.state.product.image;
       return __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
@@ -71001,10 +71063,9 @@ var ChoiceForm = function (_Component) {
                 return __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(__WEBPACK_IMPORTED_MODULE_1__ChoiceGroup__["a" /* default */], {
                   key: "choiceGroup" + index,
                   choiceGroup: choiceGroup,
-                  updateOrderItemChoice: _this2.updateOrderItemChoice,
-                  app_conf: _this2.props.app_conf,
-                  index: index,
-                  imgSrc: _this2.props.product.image
+                  updateOrderItemChoice: _this3.updateOrderItemChoice,
+                  app_conf: _this3.props.app_conf,
+                  index: index
                 });
               })
             )
@@ -71108,7 +71169,9 @@ var ChoiceGroup = function (_Component) {
                   { className: "checkmark-wrap" },
                   __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement("span", {
                     className: "checkmark",
-                    style: { backgroundImage: "url(\"/table/public/images/items/" + choice.image + "\")" }
+                    style: {
+                      backgroundImage: "url(\"/table/public/images/items/" + choice.image + "\")"
+                    }
                   }),
                   __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement("div", { className: "choice-group__icon-cover" })
                 )
@@ -71213,7 +71276,7 @@ var ShoppingCart = function (_Component) {
           this.setState({
             shoppingCartList: JSON.parse(localStorage.getItem("preorderList"))
           });
-          console.log('updateOrderList has been called from ShoppingCart Component');
+          console.log("updateOrderList has been called from ShoppingCart Component");
           this.props.updateOrderList(JSON.parse(localStorage.getItem("preorderList")));
         }
       } else if (this.props.mode === "table") {

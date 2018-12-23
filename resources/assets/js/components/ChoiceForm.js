@@ -9,7 +9,8 @@ export default class ChoiceForm extends Component {
     this.state = {
       pickedChoice: "",
       pickedOption: "",
-      product: this.props.product
+      product: { choices: [] },
+      pickedChoice: ""
     };
 
     this.updateShoppingCartList = this.updateShoppingCartList.bind(this);
@@ -32,10 +33,15 @@ export default class ChoiceForm extends Component {
    * @param {string} tableId- table id
    */
   updateShoppingCartList() {
-    
+    const orderItem = {
+      ...this.state.product,
+      choices: this.state.product.choices.map(choice => {
+        return { ...choice, pickedChoice: this.state.pickedChoice };
+      })
+    };
     this.props.updateShoppingCartList(
       true,
-      this.state.product,
+      orderItem,
       this.props.mode,
       "add",
       this.props.orderId,
@@ -50,9 +56,10 @@ export default class ChoiceForm extends Component {
    * @param {int} index
    */
   updateOrderItemChoice(pickedChoice, index) {
-    this.state.product.choices[index].pickedChoice = pickedChoice;
-    const newStateProduct = this.state.product;
-    this.setState({product:newStateProduct});
+    //this.state.product.choices[index].pickedChoice = pickedChoice;
+    this.setState({ pickedChoice });
+    // const newStateProduct = this.state.product;
+    // this.setState({ product: newStateProduct });
   }
 
   render() {
@@ -87,7 +94,6 @@ export default class ChoiceForm extends Component {
                     updateOrderItemChoice={this.updateOrderItemChoice}
                     app_conf={this.props.app_conf}
                     index={index}
-                    imgSrc={this.props.product.image}
                   />
                 );
               })}

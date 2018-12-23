@@ -90,13 +90,60 @@ export default class App extends Component {
    */
   updateShoppingCartList(isCallApi, item, mode, action, orderId, tableId) {
     // console.log("update order list in preorder mode", item);
-   
-    
+    // console.log("state.shoppingcartlist: ", this.state.shoppingCartList);
     // console.log("mode", mode);
     // console.log("action", action);
-    let flag = false;
-    for (let i = 0; i < this.state.shoppingCartList.length; i++) {   
+    // console.log("orderItem", item);
+    let resultArr = [];
+    if (action === "add") {
+      let flag = false;
+      this.setState({
+        shoppingCartList: this.state.shoppingCartList.map(orderItem => {
+          if (_.isEqual(orderItem.item, item)) {
+            flag = true;
+            console.log("work");
 
+            return { ...orderItem, quantity: orderItem.quantity + 1 };
+          } else {
+            return orderItem;
+          }
+        })
+      });
+      if (!flag) {
+        this.setState({
+          shoppingCartList: [
+            ...this.state.shoppingCartList,
+            { item: item, quantity: 1 }
+          ]
+        });
+      }
+      resultArr = this.state.shoppingCartList;
+    } else if (action === "sub") {
+      const arr = this.state.shoppingCartList.map(orderItem => {
+        if (_.isEqual(orderItem.item, item)) {
+          console.log("worked");
+          return { ...orderItem, quantity: orderItem.quantity - 1 };
+        } else {
+          return orderItem;
+        }
+      });
+
+      resultArr = arr.filter(ele => ele.quantity > 0);
+
+      this.setState({ shoppingCartList: resultArr });
+    }
+
+    this.refreshStateShoppingCartList(
+      isCallApi,
+      mode,
+      action,
+      item,
+      orderId,
+      tableId,
+      resultArr
+    );
+    /*
+    for (let i = 0; i < this.state.shoppingCartList.length; i++) {
       if (this.state.shoppingCartList[i].item.product_id === item.product_id) {
         flag = true;
         if (this.state.shoppingCartList[i].item.options.length > 0) {
@@ -114,7 +161,6 @@ export default class App extends Component {
           }
         }
 
-        
         if (
           flag === false ||
           this.state.shoppingCartList[i].item.choices.length < 1
@@ -165,15 +211,8 @@ export default class App extends Component {
         quantity: 1
       });
 
-      this.refreshStateShoppingCartList(
-        isCallApi,
-        mode,
-        action,
-        item,
-        orderId,
-        tableId
-      );
-    }
+   }
+    */
   }
   setV(v) {
     this.setState({ v: v });
@@ -212,19 +251,16 @@ export default class App extends Component {
     action,
     item,
     orderId,
-    tableId
+    tableId,
+    resultArr
   ) {
-    const arrRes = this.state.shoppingCartList;
-    this.setState({ shoppingCartList: arrRes });
     // console.log("refresh is call api: ", isCallApi);
     // console.log("refresh mode: ", mode);
     // console.log("refresh item: ", item);
     // console.log("refresh order id: ", orderId);
     if (mode === "preorder") {
-      localStorage.setItem(
-        "preorderList",
-        JSON.stringify(this.state.shoppingCartList)
-      );
+      // console.log(this.state.shoppingCartList);
+      localStorage.setItem("preorderList", JSON.stringify(resultArr));
     } else if (mode === "table" && isCallApi === true) {
       //console.log(this.state.userId);
       Axios.post("/table/public/api/updateorderlist", {
@@ -235,8 +271,6 @@ export default class App extends Component {
         tableId: tableId
       });
     }
-
-    window.location.reload();
   }
 
   render() {
