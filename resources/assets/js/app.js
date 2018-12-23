@@ -97,31 +97,24 @@ export default class App extends Component {
     let resultArr = [];
     if (action === "add") {
       let flag = false;
-      this.setState({
-        shoppingCartList: this.state.shoppingCartList.map(orderItem => {
-          if (_.isEqual(orderItem.item, item)) {
-            flag = true;
-            console.log("work");
-
-            return { ...orderItem, quantity: orderItem.quantity + 1 };
-          } else {
-            return orderItem;
-          }
-        })
+      resultArr = this.state.shoppingCartList.map(orderItem => {
+        if (_.isEqual(orderItem.item, item)) {
+          flag = true;
+          return { ...orderItem, quantity: orderItem.quantity + 1 };
+        } else {
+          return orderItem;
+        }
       });
+
       if (!flag) {
-        this.setState({
-          shoppingCartList: [
-            ...this.state.shoppingCartList,
-            { item: item, quantity: 1 }
-          ]
-        });
+        resultArr = [
+          ...this.state.shoppingCartList,
+          { item: item, quantity: 1 }
+        ];
       }
-      resultArr = this.state.shoppingCartList;
     } else if (action === "sub") {
       const arr = this.state.shoppingCartList.map(orderItem => {
         if (_.isEqual(orderItem.item, item)) {
-          console.log("worked");
           return { ...orderItem, quantity: orderItem.quantity - 1 };
         } else {
           return orderItem;
@@ -129,9 +122,9 @@ export default class App extends Component {
       });
 
       resultArr = arr.filter(ele => ele.quantity > 0);
-
-      this.setState({ shoppingCartList: resultArr });
     }
+
+    this.setState({ shoppingCartList: resultArr });
 
     this.refreshStateShoppingCartList(
       isCallApi,

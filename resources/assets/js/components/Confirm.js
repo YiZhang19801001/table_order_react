@@ -52,7 +52,7 @@ export default class Confirm extends Component {
     let qr = "=QROD=";
     if (
       this.state.shoppingCartList !== null ||
-      this.state.shoppingCartList !== 0
+      this.state.shoppingCartList.length !== 0
     ) {
       this.state.shoppingCartList.forEach(el => {
         qr = qr + el.item.upc + ",";
@@ -145,7 +145,7 @@ export default class Confirm extends Component {
             </span>
           </div>
         ) : null}
-        {this.props.match.params.mode === "preorder" ? { qr_section } : null}
+        {this.props.match.params.mode === "preorder" ? qr_section : null}
         <div className="confirm__order-list__title">
           <span className="confirm__order-list__title-text">
             {this.props.app_conf.your_order_title}

@@ -14489,28 +14489,21 @@ var App = function (_Component) {
       var resultArr = [];
       if (action === "add") {
         var flag = false;
-        this.setState({
-          shoppingCartList: this.state.shoppingCartList.map(function (orderItem) {
-            if (_.isEqual(orderItem.item, item)) {
-              flag = true;
-              console.log("work");
-
-              return _extends({}, orderItem, { quantity: orderItem.quantity + 1 });
-            } else {
-              return orderItem;
-            }
-          })
+        resultArr = this.state.shoppingCartList.map(function (orderItem) {
+          if (_.isEqual(orderItem.item, item)) {
+            flag = true;
+            return _extends({}, orderItem, { quantity: orderItem.quantity + 1 });
+          } else {
+            return orderItem;
+          }
         });
+
         if (!flag) {
-          this.setState({
-            shoppingCartList: [].concat(_toConsumableArray(this.state.shoppingCartList), [{ item: item, quantity: 1 }])
-          });
+          resultArr = [].concat(_toConsumableArray(this.state.shoppingCartList), [{ item: item, quantity: 1 }]);
         }
-        resultArr = this.state.shoppingCartList;
       } else if (action === "sub") {
         var arr = this.state.shoppingCartList.map(function (orderItem) {
           if (_.isEqual(orderItem.item, item)) {
-            console.log("worked");
             return _extends({}, orderItem, { quantity: orderItem.quantity - 1 });
           } else {
             return orderItem;
@@ -14520,9 +14513,9 @@ var App = function (_Component) {
         resultArr = arr.filter(function (ele) {
           return ele.quantity > 0;
         });
-
-        this.setState({ shoppingCartList: resultArr });
       }
+
+      this.setState({ shoppingCartList: resultArr });
 
       this.refreshStateShoppingCartList(isCallApi, mode, action, item, orderId, tableId, resultArr);
       /*
@@ -71587,7 +71580,7 @@ var Confirm = function (_Component) {
     key: "createQrCode",
     value: function createQrCode() {
       var qr = "=QROD=";
-      if (this.state.shoppingCartList !== null || this.state.shoppingCartList !== 0) {
+      if (this.state.shoppingCartList !== null || this.state.shoppingCartList.length !== 0) {
         this.state.shoppingCartList.forEach(function (el) {
           qr = qr + el.item.upc + ",";
           qr = qr + el.quantity + ",";
@@ -71676,7 +71669,7 @@ var Confirm = function (_Component) {
             this.props.app_conf.preorder_confirm_text
           )
         ) : null,
-        this.props.match.params.mode === "preorder" ? { qr_section: qr_section } : null,
+        this.props.match.params.mode === "preorder" ? qr_section : null,
         __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
           "div",
           { className: "confirm__order-list__title" },
